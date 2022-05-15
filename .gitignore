@@ -10,5 +10,8 @@
 #Object files
 *.o
 
+#gdb files
+*.elf
+
 #vscode settings
 .vscode

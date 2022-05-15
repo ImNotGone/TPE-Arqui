@@ -10,5 +10,11 @@ docker exec -it dockerArqui make all      -C /root/
 docker stop dockerArqui
 docker rm dockerArqui
 
-# abro la imagen en qemu
-qemu-system-x86_64 --rtc base=localtime -hda Image/x64BareBonesImage.qcow2 -m 512 
+if [ "$1" == "gdb" ]
+then
+    # modo debug
+    qemu-system-x86_64 -S -s --rtc base=localtime -hda Image/x64BareBonesImage.qcow2 -m 512 -d int -monitor stdio
+else
+    # abro la imagen en qemu
+    qemu-system-x86_64 --rtc base=localtime -hda Image/x64BareBonesImage.qcow2 -m 512
+fi
