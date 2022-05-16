@@ -17,8 +17,7 @@ extern uint8_t endOfKernel;
 
 static const uint64_t PageSize = 0x1000;
 
-static void * const sampleCodeModuleAddress = (void*)0x400000;
-static void * const sampleDataModuleAddress = (void*)0x500000;
+static void * const shellAddress = (void*)0x400000;
 
 typedef int (*EntryPoint)();
 
@@ -52,8 +51,7 @@ void * initializeKernelBinary()
 	ncPrint("[Loading modules]");
 	ncNewline();
 	void * moduleAddresses[] = {
-		sampleCodeModuleAddress,
-		sampleDataModuleAddress
+		shellAddress,
 	};
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
@@ -85,30 +83,34 @@ void * initializeKernelBinary()
 	return getStackBase();
 }
 
+int init_shell() {
+	return ((EntryPoint)shellAddress)();
+}
+
 int main()
 {
 	load_idt();
 
-	ncPrint("[Kernel Main]");
-	ncNewline();
-	ncPrint("  Sample code module at 0x");
-	ncPrintHex((uint64_t)sampleCodeModuleAddress);
-	ncNewline();
-	ncPrint("  Calling the sample code module returned: ");
-	ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
-	ncNewline();
-	ncNewline();
+	//ncPrint("[Kernel Main]");
+	//ncNewline();
+	//ncPrint("  Sample code module at 0x");
+	//ncPrintHex((uint64_t)sampleCodeModuleAddress);
+	//ncNewline();
+	//ncPrint("  Calling the sample code module returned: ");
+	//ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
+	//ncNewline();
+	//ncNewline();
 
-	ncPrint("  Sample data module at 0x");
-	ncPrintHex((uint64_t)sampleDataModuleAddress);
-	ncNewline();
-	ncPrint("  Sample data module contents: ");
-	ncPrint((char*)sampleDataModuleAddress);
-	ncNewline();
+	//ncPrint("  Sample data module at 0x");
+	//ncPrintHex((uint64_t)sampleDataModuleAddress);
+	//ncNewline();
+	//ncPrint("  Sample data module contents: ");
+	//ncPrint((char*)sampleDataModuleAddress);
+	//ncNewline();
 
-	ncPrint("[Finished]");
-	ncNewline();
-	ncPrintAtt("ARQUITECTURA DE LAS COMPUTADORAS", (WHITE << 4) | GREEN);
+	//ncPrint("[Finished]");
+	//ncNewline();
+	//ncPrintAtt("ARQUITECTURA DE LAS COMPUTADORAS", (WHITE << 4) | GREEN);
 
 
 /*
@@ -148,6 +150,7 @@ int main()
 	}
 	*/
 	ncClear();
+	init_shell();
 	testWrite();
 	while(1);
 	return 0;
