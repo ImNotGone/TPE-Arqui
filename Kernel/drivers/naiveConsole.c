@@ -1,5 +1,5 @@
-#include <naiveConsole.h>
-#include <colors.h>
+#include <drivers/naiveConsole.h>
+
 #define DEFAULTCOLOR (BLACK << 4 | WHITE)
 #define WCURSOR (WHITE << 4)
 #define BCURSOR (BLACK << 4)

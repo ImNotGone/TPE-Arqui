@@ -1,5 +1,7 @@
-#ifndef COLORS_H
-#define COLORS_H
+#ifndef NAIVE_CONSOLE_H
+#define NAIVE_CONSOLE_H
+
+#include <stdint.h>
 
 // para obtener un background se hace << 4
 // para utilizar un color con un backround
@@ -21,4 +23,17 @@
 #define YELLOW   0x0E
 #define WHITE    0x0F
 
-#endif //COLORS_H
+void ncPrint(const char * string);
+void ncPrintChar(char character);
+void ncNewline();
+void ncPrintDec(uint64_t value);
+void ncPrintHex(uint64_t value);
+void ncPrintBin(uint64_t value);
+void ncPrintBase(uint64_t value, uint32_t base);
+void ncClear();
+
+void ncPrintAtt(const char * string, char Att);
+void ncPrintCharAtt(char character, char Att);
+void ncCursorBlink();
+void ncBackSpace();
+#endif

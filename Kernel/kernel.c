@@ -2,12 +2,11 @@
 #include <string.h>
 #include <lib.h>
 #include <moduleLoader.h>
-#include <naiveConsole.h>
-#include <colors.h>
-#include <RTC.h>
-#include <keyboard.h>
-#include <time.h>
-#include <idtLoader.h>
+#include <drivers/naiveConsole.h>
+#include <drivers/RTC.h>
+#include <drivers/keyboard.h>
+#include <interrupts/time.h>
+#include <interrupts/idtLoader.h>
 
 extern uint8_t text;
 extern uint8_t rodata;

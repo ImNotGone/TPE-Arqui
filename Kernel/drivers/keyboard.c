@@ -1,5 +1,5 @@
-#include <keyboard.h>
-#include <naiveConsole.h>
+#include <drivers/keyboard.h>
+#include <drivers/naiveConsole.h>
 /*
 static char table [] = {
     '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '\t',

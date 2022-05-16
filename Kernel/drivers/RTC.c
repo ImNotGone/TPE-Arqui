@@ -1,4 +1,4 @@
-#include <RTC.h>
+#include <drivers/RTC.h>
 
 extern uint8_t sys_RTC(uint8_t mode);
 

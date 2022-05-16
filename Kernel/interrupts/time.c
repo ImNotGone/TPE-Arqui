@@ -1,5 +1,4 @@
-#include <time.h>
-#include <naiveConsole.h>
+#include <interrupts/time.h>
 
 static unsigned long ticks = 0;
 

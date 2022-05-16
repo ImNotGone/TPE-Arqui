@@ -1,6 +1,5 @@
-#include <syscalls.h>
-#include <naiveConsole.h>
-#include <colors.h>
+#include <interrupts/syscalls.h>
+#include <drivers/naiveConsole.h>
 
 #define STDOUT 1
 #define STDERR 2
