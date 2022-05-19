@@ -1,7 +1,8 @@
 #ifndef SYSCALLS_H_
 #define SYSCALLS_H_
+#include <stdint.h>
 
-extern sysread(uint64_t fd, char * buff, uint64_t bytes);
-extern syswrite(uint64_t fd, char * buff, uint64_t bytes);
+extern int64_t sysread(uint64_t fd, char * buff, int64_t bytes);
+extern int64_t syswrite(uint64_t fd, const char * buff, int64_t bytes);
 
 #endif//SYSCALLS_H_

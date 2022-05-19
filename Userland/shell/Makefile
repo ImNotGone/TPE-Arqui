@@ -10,6 +10,6 @@ $(MODULE): $(SOURCES)
 	$(GCC) $(GCCFLAGS) -I./include -T shell.ld $(SOURCES) asm/syscalls.o -o ../$(MODULE)
 
 clean:
-	rm -rf *.o
+	rm -rf */*.o *.o
 
 .PHONY: all clean print
