@@ -2,6 +2,8 @@
 #include <_stdio.h>
 #include <_string.h>
 
+#define UINT_MAX 4294967295
+
 static void init();
 static void command_listener();
 static void help();
@@ -37,21 +39,16 @@ static command commands[] = {
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
 
 int main() {
-	char c[4];
-
-
 	init();
 	while(1) {
 		putchar('>');
 		command_listener();
 	}
-	return 0;
 }
 
 
 static void init() {
-	char str[] = "bienvenido a la consola\n";
-	printf(str);
+	puts("Bienvenido a la consola");
 }
 
 static void command_listener() {
@@ -78,7 +75,7 @@ static void command_listener() {
 			return;
 		}
 	}
-	printf("%s comando invalido\n", commandBuffer);
+	printf("%s -> comando invalido\n", commandBuffer);
 }
 static void help() {
 	puts("Los comandos disponibles son:");
@@ -91,6 +88,21 @@ static void zerodiv() {return;}
 static void invalid_opcode() {return;}
 static void printmem() {return;}
 static void time() {return;}
-static void primes() {return;}
-static void fibo() {return;}
+static void primes() {
+    int isPrime = 1;
+    puts("Los numeros primos son:");
+    for (unsigned int number = 1; number < UINT_MAX; number+= 2, isPrime = 1) {
+        for (int i = 2; i * i <= number && isPrime; i++) {
+            if (number % i == 0)
+                isPrime = 0;
+        }
+        if (isPrime)
+            printf("-- %d\n", number);
+    }
+}
+static void fibo() {
+    printf("fibo(%d) = %d\n", 0, 0);
+    for (unsigned int i = 1, prev = 0, current = 1, next = 1; current <= UINT_MAX - prev; i++, prev = current, current = next, next = prev + current)
+        printf("fibo(%d) = %d\n", i, current);
+}
 static void screenDiv() {return;}
