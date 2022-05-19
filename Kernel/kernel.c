@@ -7,6 +7,7 @@
 #include <drivers/keyboard.h>
 #include <interrupts/time.h>
 #include <interrupts/idtLoader.h>
+#include <interrupts/syscalls.h>
 
 extern uint8_t text;
 extern uint8_t rodata;
@@ -22,6 +23,7 @@ static void * const shellAddress = (void*)0x400000;
 typedef int (*EntryPoint)();
 
 extern void testWrite();
+extern void testRead();
 
 void clearBSS(void * bssAddress, uint64_t bssSize)
 {
@@ -150,8 +152,15 @@ int main()
 	}
 	*/
 	ncClear();
+	//char c[128];
+	//syscallDispatcher(0, 0, c, 6, 0, 0);
+	//ncNewline();
+	//syscallDispatcher(1, 1, c, 6, 0, 0);
 	init_shell();
-	testWrite();
+	//testWrite();
+	//testRead();
+	//ncPrint("Sali del read");
+	//testWrite();
 	while(1);
 	return 0;
 }

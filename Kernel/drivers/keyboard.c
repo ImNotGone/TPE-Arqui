@@ -1,14 +1,6 @@
 #include <drivers/keyboard.h>
-#include <drivers/naiveConsole.h>
-/*
-static char table [] = {
-    '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '%', '\t',
-    'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p','[',']','\n','%','a','s','d','f','g','h',
-    'j','k','l',';','\'','\\','%','<','z','x','c','v','b','n','m',',','.','/'
-};
-*/
 
-#define BUFFER_SIZE     128
+#define BUFFER_SIZE     1024
 #define LSHIFT          0x2A
 #define RSHIFT          0x36
 #define BMAYUS          0x3A
@@ -40,17 +32,17 @@ static char table [] = {
 */
 
 static uint8_t lowerMapping[] = {
-      0,  ESC, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
+      0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
    '\b', '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',
    '\n',    0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';','\'', '~',
       0, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',   0, '*',
-      0,  ' ',   0,   'F',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+      0,  ' ',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
       0,    0,  38,   0, '-',  37,   0,  39, '+',   0,  40,   0,   0,   0,
       0,    0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
 };
 
 static uint8_t upperMapping[] = {
-      0,  ESC, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
+      0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+',
    '\b', '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',
    '\n',    0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':','\"', '~',
       0,  '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',   0, '*',
@@ -64,8 +56,9 @@ static uint8_t * keyMapping[] = {lowerMapping, upperMapping};
 // empiezo en lowerMapping
 static uint8_t map = LOWERMAP;
 static uint8_t keyBuffer[BUFFER_SIZE];
-static uint8_t bufferEnd = 0;
-static uint8_t bufferStart = 0;
+static uint8_t bufferFirst = 0;
+static uint8_t bufferLast = 0;
+static uint8_t bufferElementCount = 0;
 static uint8_t blockMayus = 0;
 
 static uint8_t handlekey(uint8_t key) {
@@ -84,9 +77,6 @@ static uint8_t handlekey(uint8_t key) {
     }
     return key;
 }
-//interr  -> ret
-//exep    -> no vuelve
-//user llama al cosas raras del kernel
 
 extern uint8_t sys_getKey();
 
@@ -98,33 +88,45 @@ uint8_t getKey() {
     return out;
 }
 
+int bufferIsEmpty() {
+    return bufferElementCount == 0;
+}
+
+int bufferIsFull() {
+    return bufferElementCount == BUFFER_SIZE;
+}
+
+static void appendInBuffer(uint8_t key) {
+    // err
+    if(bufferIsFull()) {
+        //exep?
+    }
+    keyBuffer[bufferLast++] = key;
+    bufferLast = bufferLast % BUFFER_SIZE;
+    bufferElementCount++;
+    return;
+}
+
+static uint8_t getNextInBuffer() {
+    if(bufferIsEmpty()) {
+        return 0;
+    }
+    bufferElementCount--;
+    uint8_t out = keyBuffer[bufferFirst++];
+    bufferFirst = bufferFirst % BUFFER_SIZE;
+    return out;
+}
+
 void keyboard_handler() {
     uint8_t out = handlekey(sys_getKey());
     if(out == 0) {
         return;
     }
-    if(out == '\n') {
-        ncNewline();
-        return;
-    }
-    if(out == '\b') {
-        ncBackSpace();
-        return;
-    }
-    ncPrintChar(out);
+    appendInBuffer(out);
     return;
-
-    keyBuffer[bufferEnd++] = out;
 }
 
 // TODO revisar el return value
 uint8_t getchar() {
-    // no hay nada para leer;
-    while (bufferStart == bufferEnd);
-    return keyBuffer[bufferStart++];
-}
-
-void cleanKeyboardBuffer() {
-    bufferEnd = bufferStart = 0;
-    return;
+    return getNextInBuffer();
 }
