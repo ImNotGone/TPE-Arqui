@@ -14,10 +14,15 @@ GLOBAL _irq05Handler
 GLOBAL _syscallHandler
 GLOBAL _exception0Handler
 
+GLOBAL _exception6Handler
+
+GLOBAL restartKernel
+
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
 EXTERN syscallDispatcher
-
+EXTERN getStackBase
+EXTERN main
 SECTION .text
 
 %macro pushState 0
@@ -73,7 +78,31 @@ SECTION .text
 %macro exceptionHandler 1
 	pushState
 
+	mov [exceptionRegisters + 8*0 ], rax
+	mov [exceptionRegisters + 8*1 ], rbx
+	mov [exceptionRegisters + 8*2 ], rcx
+	mov [exceptionRegisters + 8*3 ], rdx
+	mov [exceptionRegisters + 8*4 ], rsi
+	mov [exceptionRegisters + 8*5 ], rdi
+	mov [exceptionRegisters + 8*6 ], rbp
+	mov rax, rsp
+	add rax, 0x28
+	mov [exceptionRegisters + 8*7 ], rax	; rsp
+	mov [exceptionRegisters + 8*8 ], r8
+	mov [exceptionRegisters + 8*9 ], r9
+	mov [exceptionRegisters + 8*10], r10
+	mov [exceptionRegisters + 8*11], r11
+	mov [exceptionRegisters + 8*12], r12
+	mov [exceptionRegisters + 8*13], r13
+	mov [exceptionRegisters + 8*14], r14
+	mov [exceptionRegisters + 8*15], r15
+	mov rax, [rsp]
+	mov [exceptionRegisters + 8*16], rax	; rip
+	mov rax, [rsp+8]
+	mov [exceptionRegisters + 8*17], rax	; rflags
+
 	mov rdi, %1 ; pasaje de parametro
+	mov rsi, exceptionRegisters
 	call exceptionDispatcher
 
 	popState
@@ -157,12 +186,18 @@ _syscallHandler:
 _exception0Handler:
 	exceptionHandler 0
 
+_exception6Handler
+	exceptionHandler 6
+
 haltcpu:
 	cli
 	hlt
 	ret
 
-
+restartKernel:
+	call getStackBase
+	mov rsp, rax	; reinicio el stack
+	call main
 
 SECTION .bss
-	aux resq 1
+	exceptionRegisters resq 18

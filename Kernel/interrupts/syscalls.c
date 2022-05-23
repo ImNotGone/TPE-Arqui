@@ -113,7 +113,7 @@ void systime(Ttime * t) {
 // Escribe los MEM_DUMP_SIZE bytes desde la direccion de memoria indicada en memData
 void sysmemdump(uint64_t direction, int8_t *memData) {
     int8_t *memDir = (int8_t *) direction;
-    for (int i = 0; i < MEM_DUMP_SIZE - 1; i++)
+    for (int i = 0; i < MEM_DUMP_SIZE; i++)
         memData[i] = *(memDir + i);
     return;
 }

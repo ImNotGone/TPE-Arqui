@@ -11,8 +11,8 @@ static void init();
 static void command_listener();
 static void help();
 static void inforeg();
-static void zerodiv();
-static void invalid_opcode();
+extern void zerodiv();
+extern void invalidopcode();
 static void printmem();
 static void time();
 static void primes();
@@ -31,7 +31,7 @@ static command commands[] = {
 	{"help", "shows all available commands", help},
 	{"inforeg", "prints register snapshot", inforeg},
 	{"zerodiv", "generates a zero divition exeption", zerodiv},
-	{"invalid_opcode", "generates an invalid operation exception", invalid_opcode},
+	{"invalid_opcode", "generates an invalid operation exception", invalidopcode},
 	{"printmem", "prints the 32 bytes which follow the recieved address", printmem},
 	{"time", "prints the current system time", time},
 	{"primes", "prints primes", primes},
@@ -52,6 +52,7 @@ int main() {
 
 static void init() {
 	puts("Bienvenido a la consola");
+	help();
 }
 
 static void command_listener() {
@@ -87,13 +88,15 @@ static void help() {
 	}
 }
 static void inforeg() {return;}
-static void zerodiv() {return;}
-static void invalid_opcode() {return;}
+
 static void printmem() {
     uint64_t address;
-    // todo implementar scanf
-    scanf("%d", &address);
-    memDump(address);
+    uint8_t arr[32];
+	for(int i = 0; i < 32; i++) {
+		arr[i] = i+1;
+	}
+    scanf("%d",&address);
+    memDump((uint64_t)arr);
 }
 static void time() {
     printTime();

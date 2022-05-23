@@ -7,7 +7,9 @@ all: $(MODULE)
 
 $(MODULE): $(SOURCES)
 	$(ASM) $(ASMFLAGS) asm/syscalls.asm
-	$(GCC) $(GCCFLAGS) -I./include -T shell.ld $(SOURCES) asm/syscalls.o -o ../$(MODULE)
+	$(ASM) $(ASMFLAGS) asm/invalidopcode.asm
+	$(ASM) $(ASMFLAGS) asm/zerodiv.asm
+	$(GCC) $(GCCFLAGS) -I./include -T shell.ld $(SOURCES) asm/*.o -o ../$(MODULE)
 
 clean:
 	rm -rf */*.o *.o
