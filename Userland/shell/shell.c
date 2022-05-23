@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <time.h>
 #include <_stdio.h>
 #include <_string.h>
 
@@ -69,7 +70,7 @@ static void command_listener() {
 	}
 	commandBuffer[i] = 0;
 	putchar('\n');
-	for (int i = 0; i < commandsDim; i++) {
+	for (i = 0; i < commandsDim; i++) {
 		if (strcmp(commandBuffer, commands[i].name) == 0) {
 			commands[i].exec();
 			return;
@@ -87,7 +88,9 @@ static void inforeg() {return;}
 static void zerodiv() {return;}
 static void invalid_opcode() {return;}
 static void printmem() {return;}
-static void time() {return;}
+static void time() {
+    printTime();
+}
 static void primes() {
     int isPrime = 1;
     puts("Los numeros primos son:");
