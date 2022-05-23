@@ -2,11 +2,13 @@ section .data
     syscallread     equ 0
     syscallwrite    equ 1
     syscalltime     equ 2
+    syscallmemdump  equ 3
 
 section .text
 global sysread
 global syswrite
 global systime
+global sysmemdump
 
 
 sysread:
@@ -36,7 +38,7 @@ syswrite:
     pop rbp
     ret
 
-; rdi -> dateData
+; rdi -> dateData[]
 systime:
     push rbp
     mov rbp, rsp
@@ -47,3 +49,16 @@ systime:
     mov rsp, rbp
     pop rbp
     ret
+
+; rdi -> direccion
+; rsi -> memData[]
+sysmemdump:
+   push rbp
+       mov rbp, rsp
+
+       mov rax, syscallmemdump
+       int 80h
+
+       mov rsp, rbp
+       pop rbp
+       ret

@@ -8,6 +8,8 @@
 #define STDOUT  1
 #define STDERR  2
 
+#define MEM_DUMP_SIZE 32
+
 // rax -> rdi, 
 // rdi -> rsi, 
 // rsi -> rdx, 
@@ -19,6 +21,8 @@ typedef int64_t (*TSyscallHandler) (uint64_t rdi, uint64_t rsi, uint64_t rdx, ui
 int64_t sysread(uint64_t fd, char * buffer, int64_t bytes);
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
 void systime(uint32_t *dateData);
+void sysmemdump(uint64_t direction, int8_t *memData);
+
 
 TSyscallHandler syscallHandlers[] = {
     //0x00
@@ -26,7 +30,9 @@ TSyscallHandler syscallHandlers[] = {
     //0x01
     (TSyscallHandler) syswrite,
     //0x02
-    (TSyscallHandler) systime
+    (TSyscallHandler) systime,
+    //0x03
+    (TSyscallHandler) sysmemdump
 };
 
 static uint64_t syscallHandlersDim = sizeof(syscallHandlers) / sizeof(syscallHandlers[0]);
@@ -102,4 +108,11 @@ void systime(uint32_t *dateData) {
     dateData[3] = getRTCHours();
     dateData[4] = getRTCMinutes();
     dateData[5] = getRTCSeconds();
+}
+
+// Escribe los MEM_DUMP_SIZE bytes desde la direccion de memoria indicada en memData
+void sysmemdump(uint64_t direction, int8_t *memData) {
+    int8_t *memDir = (int8_t *) direction;
+    for (int i = 0; i < MEM_DUMP_SIZE - 1; i++)
+        memData[i] = *(memDir + i);
 }
