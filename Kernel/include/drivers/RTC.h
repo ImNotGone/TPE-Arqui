@@ -14,12 +14,12 @@
 #define RTC_MONTH           0x08
 #define RTC_YEAR            0x09
 
-uint32_t getRTCSeconds();
-uint32_t getRTCMinutes();
-uint32_t getRTCHours();
-uint32_t getRTCDayOfWeek();
-uint32_t getRTCDayOfMonth();
-uint32_t getRTCMonth();
-uint32_t getRTCYear();
+uint8_t getRTCSeconds();
+uint8_t getRTCMinutes();
+uint8_t getRTCHours();
+uint8_t getRTCDayOfWeek();
+uint8_t getRTCDayOfMonth();
+uint8_t getRTCMonth();
+uint8_t getRTCYear();
 
 #endif//RTC_H

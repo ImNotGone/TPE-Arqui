@@ -1,6 +1,7 @@
 #include <interrupts/syscalls.h>
 #include <drivers/naiveConsole.h>
 #include <drivers/keyboard.h>
+#include <drivers/RTC.h>
 
 #define STDIN   0
 #define STDOUT  1
@@ -16,13 +17,15 @@ typedef int64_t (*TSyscallHandler) (uint64_t rdi, uint64_t rsi, uint64_t rdx, ui
 
 int64_t sysread(uint64_t fd, char * buffer, int64_t bytes);
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
+int64_t systime(Ttime * ts);
 
 TSyscallHandler syscallHandlers[] = {
     //0x00
     (TSyscallHandler) sysread,
     //0x01
-    (TSyscallHandler) syswrite
-
+    (TSyscallHandler) syswrite,
+    //0x02
+    (TSyscallHandler) systime,
 };
 
 static uint64_t syscallHandlersDim = sizeof(syscallHandlers)/sizeof(syscallHandlers[0]);
@@ -84,4 +87,14 @@ int64_t sysread(uint64_t fd, char * buffer, int64_t bytes) {
         buffer[i] = c;
     }
     return i;
+}
+
+int64_t systime(Ttime * ts) {
+    ts->year = getRTCYear();
+    ts->month = getRTCMonth();
+    ts->day = getRTCDayOfMonth();
+    ts->hour = getRTCHours();
+    ts->min = getRTCMinutes();
+    ts->sec = getRTCSeconds();
+    return 1;
 }

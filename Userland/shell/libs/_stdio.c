@@ -35,10 +35,10 @@ int64_t vfprintf(uint64_t fd, const char * fmt, va_list args) {
             // salteo el %
             i++;
             switch (fmt[i]) {
-                case 'c': fputchar(fd, va_arg(args, int)); break;
-                case 'd': vfprintf(fd, convert(va_arg(args, int), 10), args); break;
-                case 'o': vfprintf(fd, "0", args); vfprintf(fd, convert(va_arg(args, int), 8), args); break;
-                case 'x': vfprintf(fd, "0x", args); vfprintf(fd, convert(va_arg(args, int), 16), args); break;
+                case 'c': fputchar(fd, va_arg(args, char)); break;
+                case 'd': vfprintf(fd, convert(va_arg(args, uint64_t), 10), args); break;
+                case 'o': vfprintf(fd, "0", args); vfprintf(fd, convert(va_arg(args, uint64_t), 8), args); break;
+                case 'x': vfprintf(fd, "0x", args); vfprintf(fd, convert(va_arg(args, uint64_t), 16), args); break;
                 case 's': vfprintf(fd, va_arg(args, char *), args); break;
                 case '%': fputchar(fd, '%'); break;
 

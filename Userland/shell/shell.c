@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <_stdio.h>
 #include <_string.h>
+#include <syscalls.h>
 
 #define UINT_MAX 4294967295
 
@@ -87,7 +88,12 @@ static void inforeg() {return;}
 static void zerodiv() {return;}
 static void invalid_opcode() {return;}
 static void printmem() {return;}
-static void time() {return;}
+static void time() {
+	Ttime t;
+	systime(&t);
+	printf("%d/%d/%d - %d:%d:%d\n", t.day, t.month, t.year, t.hour, t.min, t.sec);
+	return;
+}
 static void primes() {
     int isPrime = 1;
     puts("Los numeros primos son:");

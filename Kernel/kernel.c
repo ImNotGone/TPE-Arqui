@@ -156,6 +156,8 @@ int main()
 	//syscallDispatcher(0, 0, c, 6, 0, 0);
 	//ncNewline();
 	//syscallDispatcher(1, 1, c, 6, 0, 0);
+	//Ttime t;
+	//syscallDispatcher(2, (uint64_t)&t, 0, 0, 0, 0);
 	init_shell();
 	//testWrite();
 	//testRead();
