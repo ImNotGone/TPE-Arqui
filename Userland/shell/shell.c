@@ -1,4 +1,6 @@
 #include <stdint.h>
+#include <memDump.h>
+#include <time.h>
 #include <_stdio.h>
 #include <_string.h>
 #include <syscalls.h>
@@ -70,7 +72,7 @@ static void command_listener() {
 	}
 	commandBuffer[i] = 0;
 	putchar('\n');
-	for (int i = 0; i < commandsDim; i++) {
+	for (i = 0; i < commandsDim; i++) {
 		if (strcmp(commandBuffer, commands[i].name) == 0) {
 			commands[i].exec();
 			return;
@@ -87,12 +89,14 @@ static void help() {
 static void inforeg() {return;}
 static void zerodiv() {return;}
 static void invalid_opcode() {return;}
-static void printmem() {return;}
+static void printmem() {
+    uint64_t address;
+    // todo implementar scanf
+    scanf("%d", &address);
+    memDump(address);
+}
 static void time() {
-	Ttime t;
-	systime(&t);
-	printf("%d/%d/%d - %d:%d:%d\n", t.day, t.month, t.year, t.hour, t.min, t.sec);
-	return;
+    printTime();
 }
 static void primes() {
     int isPrime = 1;

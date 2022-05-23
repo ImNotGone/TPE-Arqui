@@ -7,6 +7,8 @@
 #define STDOUT  1
 #define STDERR  2
 
+#define MEM_DUMP_SIZE 32
+
 // rax -> rdi, 
 // rdi -> rsi, 
 // rsi -> rdx, 
@@ -17,7 +19,9 @@ typedef int64_t (*TSyscallHandler) (uint64_t rdi, uint64_t rsi, uint64_t rdx, ui
 
 int64_t sysread(uint64_t fd, char * buffer, int64_t bytes);
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
-int64_t systime(Ttime * ts);
+void systime(Ttime * ts);
+void sysmemdump(uint64_t direction, int8_t *memData);
+
 
 TSyscallHandler syscallHandlers[] = {
     //0x00
@@ -26,9 +30,11 @@ TSyscallHandler syscallHandlers[] = {
     (TSyscallHandler) syswrite,
     //0x02
     (TSyscallHandler) systime,
+    //0x03
+    (TSyscallHandler) sysmemdump
 };
 
-static uint64_t syscallHandlersDim = sizeof(syscallHandlers)/sizeof(syscallHandlers[0]);
+static uint64_t syscallHandlersDim = sizeof(syscallHandlers) / sizeof(syscallHandlers[0]);
 
 int64_t syscallDispatcher(uint64_t rax, uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t r10, uint64_t r8) {
     //ncPrint("rax: ");
@@ -89,12 +95,25 @@ int64_t sysread(uint64_t fd, char * buffer, int64_t bytes) {
     return i;
 }
 
-int64_t systime(Ttime * ts) {
-    ts->year = getRTCYear();
-    ts->month = getRTCMonth();
-    ts->day = getRTCDayOfMonth();
-    ts->hour = getRTCHours();
-    ts->min = getRTCMinutes();
-    ts->sec = getRTCSeconds();
-    return 1;
+// Escribe la info recibida del rtc en dateData[6]
+// dateData[0] = year, dateData[1] = month, dateData[2] = day
+// dateData[3] = hours, dateData[4] = minutes, dateData[5] = seconds
+// todo otra opcion es que devuelva una estructura con los datos
+// pero tanto kernel como userland deberian tener la definicion de esa estructura?
+void systime(Ttime * t) {
+    t->year = getRTCYear();
+    t->month = getRTCMonth();
+    t->day = getRTCDayOfMonth();
+    t->hour = getRTCHours();
+    t->min = getRTCMinutes();
+    t->sec = getRTCSeconds();
+    return;
+}
+
+// Escribe los MEM_DUMP_SIZE bytes desde la direccion de memoria indicada en memData
+void sysmemdump(uint64_t direction, int8_t *memData) {
+    int8_t *memDir = (int8_t *) direction;
+    for (int i = 0; i < MEM_DUMP_SIZE - 1; i++)
+        memData[i] = *(memDir + i);
+    return;
 }
