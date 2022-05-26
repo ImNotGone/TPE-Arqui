@@ -10,6 +10,9 @@
 #Object files
 *.o
 
+#gdb files
+.gdb_history
+*.elf
 #vscode settings
 .vscode
 
