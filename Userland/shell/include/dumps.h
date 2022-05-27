@@ -5,5 +5,6 @@
 #define MEM_DUMP_COUNT 32
 
 void memDump(uint64_t address);
+void regDump();
 
 #endif

@@ -117,13 +117,12 @@ static uint8_t getNextInBuffer() {
     return out;
 }
 
-void keyboard_handler() {
-    uint8_t out = handlekey(sys_getKey());
-    if(out == 0) {
+void keyboard_handler(uint8_t scanCode) {
+    uint8_t out = handlekey(scanCode);
+    if(out == 0)
         return;
-    }
+
     appendInBuffer(out);
-    return;
 }
 
 // TODO revisar el return value

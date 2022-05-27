@@ -19,6 +19,9 @@ GLOBAL _exception6Handler
 GLOBAL restartKernel
 
 EXTERN irqDispatcher
+EXTERN sys_getKey
+EXTERN keyboard_handler
+EXTERN saveRegs
 EXTERN exceptionDispatcher
 EXTERN syscallDispatcher
 EXTERN getStackBase
@@ -147,7 +150,57 @@ _irq00Handler:
 
 ;Keyboard
 _irq01Handler:
-	irqHandlerMaster 1
+    pushState
+
+    ; levanto el scancode
+    call sys_getKey
+
+    ; si es el codigo de guardar registros los guardo
+    ; sino salto al dispatcher
+    cmp al, SAVE_REGISTERS_CODE
+    jne .irqDispatcher
+
+    mov rax, [rsp + 8] ; rax es el primero del stack
+    mov [registerSnapshot + 8 * 0 ], rax
+    mov [registerSnapshot + 8 * 1 ], rbx
+    mov [registerSnapshot + 8 * 2 ], rcx
+    mov [registerSnapshot + 8 * 3 ], rdx
+    mov [registerSnapshot + 8 * 4 ], rsi
+    mov [registerSnapshot + 8 * 5 ], rdi
+    mov [registerSnapshot + 8 * 6 ], rbp
+    mov rax, rsp
+    add rax, 16 * 8 ; es lo que se decremento rsp con la macro pushState y el pusheo de la dir. de retorno
+    mov [registerSnapshot + 8 * 7 ], rax ;rsp
+    mov [registerSnapshot + 8 * 8 ], r8
+    mov [registerSnapshot + 8 * 9 ], r9
+    mov [registerSnapshot + 8 * 10], r10
+   	mov [registerSnapshot + 8 * 11], r11
+   	mov [registerSnapshot + 8 * 12], r12
+   	mov [registerSnapshot + 8 * 13], r13
+   	mov [registerSnapshot + 8 * 14], r14
+   	mov [registerSnapshot + 8 * 15], r15
+   	add rax, 8 ; posicion en el stack de la dir. de retorno (valor del rip previo al llamado de la interrupcion)
+   	mov rbx, [rax] ;
+   	mov [registerSnapshot + 8 * 16], rbx
+
+    mov rdi, registerSnapshot
+    call saveRegs
+
+    jmp .endKbdInt
+
+.irqDispatcher:
+    cmp al, SAVE_REGISTERS_BREAK_CODE
+    je .endKbdInt
+
+    mov rdi, rax
+    call keyboard_handler
+
+.endKbdInt:
+    mov al, 20h
+    out 20h, al
+
+    popState
+    iretq
 
 ;Cascade pic never called
 _irq02Handler:
@@ -186,7 +239,7 @@ _syscallHandler:
 _exception0Handler:
 	exceptionHandler 0
 
-_exception6Handler
+_exception6Handler:
 	exceptionHandler 6
 
 haltcpu:
@@ -201,3 +254,8 @@ restartKernel:
 
 SECTION .bss
 	exceptionRegisters resq 18
+	registerSnapshot resq 17
+
+SECTION .data
+    SAVE_REGISTERS_CODE equ 29
+    SAVE_REGISTERS_BREAK_CODE equ 0b10011101

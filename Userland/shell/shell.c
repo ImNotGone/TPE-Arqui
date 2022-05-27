@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <memDump.h>
+#include <dumps.h>
 #include <time.h>
 #include <_stdio.h>
 #include <_string.h>
@@ -87,7 +87,9 @@ static void help() {
 		printf("%d) %s => %s\n", i, commands[i].name, commands[i].desc);
 	}
 }
-static void inforeg() {return;}
+static void inforeg() {
+    regDump();
+}
 
 static void printmem() {
     uint64_t address;
