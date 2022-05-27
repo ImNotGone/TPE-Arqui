@@ -151,13 +151,19 @@ int main()
     	ncPrintChar(getchar());
 	}
 	*/
-	ncClear();
 	//char c[128];
 	//syscallDispatcher(0, 0, c, 6, 0, 0);
 	//ncNewline();
 	//syscallDispatcher(1, 1, c, 6, 0, 0);
 	//Ttime t;
 	//syscallDispatcher(2, (uint64_t)&t, 0, 0, 0, 0);
+	ncPrint("Presione enter para acceder a la consola");
+	char c;
+	do{
+		// freno la ejecucion del programa hasta un enter
+		_hlt();
+	} while((c=getchar()) != '\n');
+	ncClear();
 	init_shell();
 	//testWrite();
 	//testRead();

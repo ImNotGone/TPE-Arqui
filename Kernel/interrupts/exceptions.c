@@ -75,7 +75,7 @@ static void excepHandler(fp handler){
 	ncPrint("Presione enter para continuar");
 	int c;
 	do{
-		// freno la ejecucion del programa hasta un interrupt
+		// freno la ejecucion del programa hasta un enter
 		_hlt();
 	} while((c=getchar()) != '\n');
 	ncClear();
