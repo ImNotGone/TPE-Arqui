@@ -13,6 +13,9 @@
 #gdb files
 .gdb_history
 *.elf
+#docker
+.bash_history
+
 #vscode settings
 .vscode
 

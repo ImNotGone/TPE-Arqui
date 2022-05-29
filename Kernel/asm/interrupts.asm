@@ -19,8 +19,7 @@ GLOBAL _exception6Handler
 GLOBAL restartKernel
 
 EXTERN irqDispatcher
-EXTERN sys_getKey
-EXTERN keyboard_handler
+EXTERN mustUpdateInforeg
 EXTERN saveRegs
 EXTERN exceptionDispatcher
 EXTERN syscallDispatcher
@@ -80,7 +79,11 @@ SECTION .text
 
 %macro exceptionHandler 1
 	pushState
-
+	; En el stack se encuentran:
+	; rsp + 15 * 8 : rip anterior
+	; rsp + 16 * 8 : ??
+	; rsp + 17 * 8 : flags
+	; rsp + 18 * 8 : rsp anterior 
 	mov [exceptionRegisters + 8*0 ], rax
 	mov [exceptionRegisters + 8*1 ], rbx
 	mov [exceptionRegisters + 8*2 ], rcx
@@ -88,8 +91,7 @@ SECTION .text
 	mov [exceptionRegisters + 8*4 ], rsi
 	mov [exceptionRegisters + 8*5 ], rdi
 	mov [exceptionRegisters + 8*6 ], rbp
-	mov rax, rsp
-	add rax, 0x28
+	mov rax, [rsp+18*8] ; buscamos el rsp anterior en el stack 
 	mov [exceptionRegisters + 8*7 ], rax	; rsp
 	mov [exceptionRegisters + 8*8 ], r8
 	mov [exceptionRegisters + 8*9 ], r9
@@ -99,15 +101,14 @@ SECTION .text
 	mov [exceptionRegisters + 8*13], r13
 	mov [exceptionRegisters + 8*14], r14
 	mov [exceptionRegisters + 8*15], r15
-	mov rax, [rsp]
+	mov rax, [rsp+15*8] ; buscamos el rip anterior en el stack
 	mov [exceptionRegisters + 8*16], rax	; rip
-	mov rax, [rsp+8]
+	mov rax, [rsp+17*8] ; buscamos las flags en el stack
 	mov [exceptionRegisters + 8*17], rax	; rflags
 
 	mov rdi, %1 ; pasaje de parametro
 	mov rsi, exceptionRegisters
 	call exceptionDispatcher
-
 	popState
 	iretq
 %endmacro
@@ -152,15 +153,17 @@ _irq00Handler:
 _irq01Handler:
     pushState
 
-    ; levanto el scancode
-    call sys_getKey
+	mov rdi, 1
+	call irqDispatcher
 
-    ; si es el codigo de guardar registros los guardo
-    ; sino salto al dispatcher
-    cmp al, SAVE_REGISTERS_CODE
-    jne .irqDispatcher
 
-    mov rax, [rsp + 8] ; rax es el primero del stack
+	call mustUpdateInforeg
+	cmp rax, 1
+	jne .endKbdInt
+	popState
+	pushState
+.saveRegs:
+	
     mov [registerSnapshot + 8 * 0 ], rax
     mov [registerSnapshot + 8 * 1 ], rbx
     mov [registerSnapshot + 8 * 2 ], rcx
@@ -168,8 +171,8 @@ _irq01Handler:
     mov [registerSnapshot + 8 * 4 ], rsi
     mov [registerSnapshot + 8 * 5 ], rdi
     mov [registerSnapshot + 8 * 6 ], rbp
-    mov rax, rsp
-    add rax, 16 * 8 ; es lo que se decremento rsp con la macro pushState y el pusheo de la dir. de retorno
+    mov rax, [rsp+18*8]
+    ;add rax, 16 * 8 ; es lo que se decremento rsp con la macro pushState y el pusheo de la dir. de retorno
     mov [registerSnapshot + 8 * 7 ], rax ;rsp
     mov [registerSnapshot + 8 * 8 ], r8
     mov [registerSnapshot + 8 * 9 ], r9
@@ -179,28 +182,19 @@ _irq01Handler:
    	mov [registerSnapshot + 8 * 13], r13
    	mov [registerSnapshot + 8 * 14], r14
    	mov [registerSnapshot + 8 * 15], r15
-   	add rax, 8 ; posicion en el stack de la dir. de retorno (valor del rip previo al llamado de la interrupcion)
-   	mov rbx, [rax] ;
-   	mov [registerSnapshot + 8 * 16], rbx
+   	mov rax, [rsp+15*8]; posicion en el stack de la dir. de retorno (valor del rip previo al llamado de la interrupcion)
+   	mov [registerSnapshot + 8 * 16], rax
 
     mov rdi, registerSnapshot
     call saveRegs
 
-    jmp .endKbdInt
-
-.irqDispatcher:
-    cmp al, SAVE_REGISTERS_BREAK_CODE
-    je .endKbdInt
-
-    mov rdi, rax
-    call keyboard_handler
-
 .endKbdInt:
-    mov al, 20h
-    out 20h, al
+	; signal pic EOI (End of Interrupt)
+	mov al, 20h
+	out 20h, al
 
-    popState
-    iretq
+	popState
+	iretq 
 
 ;Cascade pic never called
 _irq02Handler:
@@ -255,7 +249,3 @@ restartKernel:
 SECTION .bss
 	exceptionRegisters resq 18
 	registerSnapshot resq 17
-
-SECTION .data
-    SAVE_REGISTERS_CODE equ 29
-    SAVE_REGISTERS_BREAK_CODE equ 0b10011101

@@ -24,7 +24,7 @@ typedef int (*EntryPoint)();
 
 extern void testWrite();
 extern void testRead();
-
+extern void _hlt();
 void clearBSS(void * bssAddress, uint64_t bssSize)
 {
 	memset(bssAddress, 0, bssSize);

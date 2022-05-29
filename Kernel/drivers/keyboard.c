@@ -4,6 +4,8 @@
 #define LSHIFT          0x2A
 #define RSHIFT          0x36
 #define BMAYUS          0x3A
+#define RCNTRL          0xE01D
+#define LCNTRL          0x1D
 #define UNPRESSED_BIT   0x80
 #define KEY_BITS_MASK   0x7F
 #define LOWERMAP        0
@@ -12,6 +14,7 @@
 #define IS_PRESSED(key) (((key) & UNPRESSED_BIT) == 0)
 #define IS_SHIFT(key)   (KEY_VALUE(key) == LSHIFT || KEY_VALUE(key) == RSHIFT)
 #define IS_BMAYUS(key)  (KEY_VALUE(key) == BMAYUS)
+#define IS_CONTROL(key) (KEY_VALUE(key) == LCNTRL || KEY_VALUE(key) == RCNTRL)
 #define TO_UPPER(key)   (('a' <= (key) && (key) <= 'z')?(key) - 'a' + 'A':(key))
 #define TO_LOWER(key)   (('A' <= (key) && (key) <= 'Z')?(key) - 'A' + 'a':(key))
 #define IS_ALPHA(key)   ('A' <= TO_UPPER(key) && TO_UPPER(key) <= 'Z')
@@ -26,6 +29,9 @@
 #define F8  0x42
 #define F9  0x43
 #define F10 0x44
+
+#define SAVE_REGS_KEY 's'
+
 /*
 #define F11 0x45
 #define F12 0x46
@@ -60,8 +66,19 @@ static uint8_t bufferFirst = 0;
 static uint8_t bufferLast = 0;
 static uint8_t bufferElementCount = 0;
 static uint8_t blockMayus = 0;
+static uint8_t cntrlPressed = 0;
+static uint8_t inforegFlag = 0;
 
 static uint8_t handlekey(uint8_t key) {
+    if(cntrlPressed && (IS_PRESSED(key)) && SAVE_REGS_KEY == keyMapping[map][KEY_VALUE(key)]) {
+        inforegFlag = 1;
+        return 0;
+    }
+    inforegFlag = 0;
+    if(IS_CONTROL(key)) {
+        cntrlPressed = (IS_PRESSED(key));
+        return 0;
+    }
     if(IS_SHIFT(key)) {
         map = (IS_PRESSED(key));
         return 0;
@@ -70,7 +87,7 @@ static uint8_t handlekey(uint8_t key) {
         blockMayus = !blockMayus;
         return 0;
     }
-    if(!IS_PRESSED(key) || keyMapping[map][key] == 0) return 0;
+    if(!IS_PRESSED(key) || keyMapping[map][key] == 0) return 0;    
     key = keyMapping[map][key];
     if(IS_ALPHA(key) && blockMayus) {
         key = (map == LOWERMAP)? TO_UPPER(key):TO_LOWER(key);
@@ -117,15 +134,18 @@ static uint8_t getNextInBuffer() {
     return out;
 }
 
-void keyboard_handler(uint8_t scanCode) {
-    uint8_t out = handlekey(scanCode);
-    if(out == 0)
+void keyboard_handler() {
+    uint8_t out = handlekey(sys_getKey());
+    if(out == 0) 
         return;
-
     appendInBuffer(out);
 }
 
 // TODO revisar el return value
 uint8_t getchar() {
     return getNextInBuffer();
+}
+
+uint8_t mustUpdateInforeg() {
+    return inforegFlag;
 }

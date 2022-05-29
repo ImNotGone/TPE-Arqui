@@ -14,6 +14,11 @@ if [ "$1" == "gdb" ]
 then
     # modo debug
     qemu-system-x86_64 -S -s --rtc base=localtime -hda Image/x64BareBonesImage.qcow2 -m 512 -d int -monitor stdio
+    # docker run -v ${PWD}:/root --security-opt seccomp:unconfined -ti --name gdb agodio/itba-so:1.0
+    # adentro del docker correr cd root
+    # despues gdb
+    # docker stop gdb
+    # docker rm gdb
 else
     # abro la imagen en qemu
     qemu-system-x86_64 --rtc base=localtime -hda Image/x64BareBonesImage.qcow2 -m 512

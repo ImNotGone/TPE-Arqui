@@ -12,7 +12,7 @@ void regDump() {
     TRegs regs;
     int8_t regSaved = sysregdump(&regs);
     if(!regSaved) {
-        puts("No se ha encontrado un snapShot de los registros, presione 'ctrl' para realizar un snapShot");
+        puts("No se ha encontrado un snapShot de los registros, presione 'ctrl + s' para realizar un snapShot");
         return;
     }
 

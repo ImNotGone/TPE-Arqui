@@ -29,7 +29,7 @@ typedef struct command {
 
 static command commands[] = {
 	{"help", "shows all available commands", help},
-	{"inforeg", "prints register snapshot", inforeg},
+	{"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg},
 	{"zerodiv", "generates a zero divition exeption", zerodiv},
 	{"invalid_opcode", "generates an invalid operation exception", invalidopcode},
 	{"printmem", "prints the 32 bytes which follow the recieved address", printmem},
