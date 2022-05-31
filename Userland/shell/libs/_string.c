@@ -3,7 +3,9 @@
 
 uint64_t strlen(const char * str) {
     uint64_t i = 0;
-    while(str[i++] != '\0');
+    while(str[i] != '\0') {
+        i++;
+    }
     return i;
 }
 

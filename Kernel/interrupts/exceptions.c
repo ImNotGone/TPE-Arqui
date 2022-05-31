@@ -1,6 +1,6 @@
 #include <interrupts/exceptions.h>
 #include <drivers/keyboard.h>
-#include <drivers/naiveConsole.h>
+#include <drivers/graphics.h>
 
 #define NULL (void *)0
 typedef void (*fp)(void);
@@ -57,28 +57,29 @@ void exceptionDispatcher(int exception, uint64_t exceptionRegisters[18]) {
 		"rip   : ",
 		"rflags: ",
 	};
-	ncPrint("Exception ");
-	ncPrintDec(exception);
-	ncNewline();
-	ncPrint(exceptions[exception].errmsg);
-	ncNewline();
+	gPrint("Exception ");
+	gPrintDec(exception);
+	gNewline();
+	gPrint(exceptions[exception].errmsg);
+	gNewline();
 	for(int i = 0; i < 18; i++) {
-		ncPrint(registers[i]);
-		ncPrintHex(exceptionRegisters[i]);
-		ncNewline();
+		gPrint(registers[i]);
+		gPrint("0x");
+		gPrintHex(exceptionRegisters[i]);
+		gNewline();
 	}
 	excepHandler(exceptions[exception].handle);
 }
 
 static void excepHandler(fp handler){
 	handler();
-	ncPrint("Presione enter para continuar");
+	gPrint("Presione enter para continuar");
 	int c;
 	do{
 		// freno la ejecucion del programa hasta un enter
 		_hlt();
 	} while((c=getchar()) != '\n');
-	ncClear();
+	gClear();
 	restartKernel();
 }
 

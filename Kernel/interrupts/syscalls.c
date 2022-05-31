@@ -1,5 +1,5 @@
 #include <interrupts/syscalls.h>
-#include <drivers/naiveConsole.h>
+#include <drivers/graphics.h>
 #include <drivers/keyboard.h>
 #include <drivers/RTC.h>
 
@@ -31,7 +31,8 @@ int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
 void systime(TTime * ts);
 void sysmemdump(uint64_t direction, int8_t *memData);
 int64_t sysregdump(TRegs *regs);
-
+int64_t sysDivWindow();
+int64_t sysSwitchWindow();
 
 TSyscallHandler syscallHandlers[] = {
     //0x00
@@ -43,7 +44,11 @@ TSyscallHandler syscallHandlers[] = {
     //0x03
     (TSyscallHandler) sysmemdump,
     //0x04
-    (TSyscallHandler) sysregdump
+    (TSyscallHandler) sysregdump,
+    //0x05
+    (TSyscallHandler) sysDivWindow,
+    //0x06
+    (TSyscallHandler) sysSwitchWindow,
 };
 
 static uint64_t syscallHandlersDim = sizeof(syscallHandlers) / sizeof(syscallHandlers[0]);
@@ -77,14 +82,12 @@ int64_t syscallDispatcher(uint64_t rax, uint64_t rdi, uint64_t rsi, uint64_t rdx
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes) {
     if(fd != STDOUT && fd != STDERR) return -1;
     int64_t bytesWritten;
-    uint8_t color = (fd == STDOUT)? WHITE:RED;
+    static gcolor WHITE = {0xFF, 0xFF, 0xFF};
+    static gcolor BLACK = {0x00, 0x00, 0x00};
+    static gcolor RED   = {0xFF, 0x00, 0x00};
+    gcolor foreground = (fd == STDOUT)? WHITE:RED;
     for(bytesWritten = 0; bytesWritten < bytes; bytesWritten++) {
-        if(buffer[bytesWritten] == '\n') {
-            ncNewline();
-        } else if(buffer[bytesWritten] == '\b') {
-            ncBackSpace();
-        } else
-            ncPrintCharAtt(buffer[bytesWritten], color);
+        gPutcharColor(buffer[bytesWritten], BLACK, foreground);
     }
     return bytesWritten;
 }
@@ -147,4 +150,12 @@ int64_t sysregdump(TRegs *regs) {
     regs->r15 = registerSnapshot[15];
     regs->rip = registerSnapshot[16];
     return 1;
+}
+
+int64_t sysDivWindow() {
+	divideWindows();
+}
+
+int64_t sysSwitchWindow() {
+    switchWindow();
 }

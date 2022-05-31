@@ -6,7 +6,7 @@
 #include <syscalls.h>
 
 #define UINT_MAX 4294967295
-
+#define COMMAND_BUFFERSIZE 256
 static void init();
 static void command_listener();
 static void help();
@@ -56,10 +56,10 @@ static void init() {
 }
 
 static void command_listener() {
-	static char commandBuffer[128];
+	static char commandBuffer[COMMAND_BUFFERSIZE];
 	int c;
 	int i = 0;
-	while((c = getchar()) != '\n' && i < 128) {
+	while((c = getchar()) != '\n' && i < COMMAND_BUFFERSIZE) {
 		if(c == '\b') {
 			if(i > 0) {
  				putchar(c);

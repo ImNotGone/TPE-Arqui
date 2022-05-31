@@ -2,7 +2,7 @@
 #include <string.h>
 #include <lib.h>
 #include <moduleLoader.h>
-#include <drivers/naiveConsole.h>
+#include <drivers/graphics.h>
 #include <drivers/RTC.h>
 #include <drivers/keyboard.h>
 #include <interrupts/time.h>
@@ -41,47 +41,47 @@ void * getStackBase()
 
 void * initializeKernelBinary()
 {
-	char buffer[10];
+	//char buffer[10];
 
-	ncPrint("[x64BareBones]");
-	ncNewline();
+	//gPrint("[x64BareBones]");
+	//gNewline();
 
-	ncPrint("CPU Vendor:");
-	ncPrint(cpuVendor(buffer));
-	ncNewline();
+	//gPrint("CPU Vendor:");
+	//gPrint(cpuVendor(buffer));
+	//gNewline();
 
-	ncPrint("[Loading modules]");
-	ncNewline();
+	//gPrint("[Loading modules]");
+	//gNewline();
 	void * moduleAddresses[] = {
 		shellAddress,
 	};
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
-	ncPrint("[Done]");
-	ncNewline();
-	ncNewline();
+	//gPrint("[Done]");
+	//gNewline();
+	//gNewline();
 
-	ncPrint("[Initializing kernel's binary]");
-	ncNewline();
+	//gPrint("[Initializing kernel's binary]");
+	//gNewline();
 
 	clearBSS(&bss, &endOfKernel - &bss);
 
-	ncPrint("  text: 0x");
-	ncPrintHex((uint64_t)&text);
-	ncNewline();
-	ncPrint("  rodata: 0x");
-	ncPrintHex((uint64_t)&rodata);
-	ncNewline();
-	ncPrint("  data: 0x");
-	ncPrintHex((uint64_t)&data);
-	ncNewline();
-	ncPrint("  bss: 0x");
-	ncPrintHex((uint64_t)&bss);
-	ncNewline();
+	//gPrint("  text: 0x");
+	//gPrintHex((uint64_t)&text);
+	//gNewline();
+	//gPrint("  rodata: 0x");
+	//gPrintHex((uint64_t)&rodata);
+	//gNewline();
+	//gPrint("  data: 0x");
+	//gPrintHex((uint64_t)&data);
+	//gNewline();
+	//gPrint("  bss: 0x");
+	//gPrintHex((uint64_t)&bss);
+	//gNewline();
 
-	ncPrint("[Done]");
-	ncNewline();
-	ncNewline();
+	//gPrint("[Done]");
+	//gNewline();
+	//gNewline();
 	return getStackBase();
 }
 
@@ -92,82 +92,82 @@ int init_shell() {
 int main()
 {
 	load_idt();
+	initGraphics();
+	//gPrint("[Kernel Main]");
+	//gNewline();
+	//gPrint("  Sample code module at 0x");
+	//gPrintHex((uint64_t)sampleCodeModuleAddress);
+	//gNewline();
+	//gPrint("  Calling the sample code module returned: ");
+	//gPrintHex(((EntryPoint)sampleCodeModuleAddress)());
+	//gNewline();
+	//gNewline();
 
-	//ncPrint("[Kernel Main]");
-	//ncNewline();
-	//ncPrint("  Sample code module at 0x");
-	//ncPrintHex((uint64_t)sampleCodeModuleAddress);
-	//ncNewline();
-	//ncPrint("  Calling the sample code module returned: ");
-	//ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
-	//ncNewline();
-	//ncNewline();
+	//gPrint("  Sample data module at 0x");
+	//gPrintHex((uint64_t)sampleDataModuleAddress);
+	//gNewline();
+	//gPrint("  Sample data module contents: ");
+	//gPrint((char*)sampleDataModuleAddress);
+	//gNewline();
 
-	//ncPrint("  Sample data module at 0x");
-	//ncPrintHex((uint64_t)sampleDataModuleAddress);
-	//ncNewline();
-	//ncPrint("  Sample data module contents: ");
-	//ncPrint((char*)sampleDataModuleAddress);
-	//ncNewline();
-
-	//ncPrint("[Finished]");
-	//ncNewline();
-	//ncPrintAtt("ARQUITECTURA DE LAS COMPUTADORAS", (WHITE << 4) | GREEN);
+	//gPrint("[Finished]");
+	//gNewline();
+	//gPrintAtt("ARQUITECTURA DE LAS COMPUTADORAS", (WHITE << 4) | GREEN);
 
 
 /*
-	ncNewline();
-	ncPrintDec(getRTCHours());
-	ncPrintChar(':');
-	ncPrintDec(getRTCMinutes());
-	ncPrintChar(':');
-	ncPrintDec(getRTCSeconds());
-	ncNewline();
-	ncPrintDec(getRTCDayOfMonth());
-	ncPrintChar('/');
-	ncPrintDec(getRTCMonth());
-	ncPrintChar('/');
-	ncPrintDec(getRTCYear());
+	gNewline();
+	gPrintDec(getRTCHours());
+	gPrintChar(':');
+	gPrintDec(getRTCMinutes());
+	gPrintChar(':');
+	gPrintDec(getRTCSeconds());
+	gNewline();
+	gPrintDec(getRTCDayOfMonth());
+	gPrintChar('/');
+	gPrintDec(getRTCMonth());
+	gPrintChar('/');
+	gPrintDec(getRTCYear());
 */
 
 
 	// codigo de teclado
 	/*
-	ncClear();
+	gClear();
      
-    ncNewline();
-    ncPrint("esperando tecla");
+    gNewline();
+    gPrint("esperando tecla");
           
     char c=getchar();
-    ncNewline();
-    ncPrint("tecla Recibida");
-    ncNewline();
+    gNewline();
+    gPrint("tecla Recibida");
+    gNewline();
 */
 	/*
-	ncPrintHex(c);
-	ncPrintChar(getchar());
+	gPrintHex(c);
+	gPrintChar(getchar());
     for (int j =1 ; j < 1000 ;j++) {         
-    	//ncPrintHex(getKey());
-    	ncPrintChar(getchar());
+    	//gPrintHex(getKey());
+    	gPrintChar(getchar());
 	}
 	*/
 	//char c[128];
 	//syscallDispatcher(0, 0, c, 6, 0, 0);
-	//ncNewline();
+	//gNewline();
 	//syscallDispatcher(1, 1, c, 6, 0, 0);
 	//Ttime t;
 	//syscallDispatcher(2, (uint64_t)&t, 0, 0, 0, 0);
-	ncPrint("Presione enter para acceder a la consola");
+	gPrint("Presione enter para acceder a la consola");
 	char c;
 	do{
 		// freno la ejecucion del programa hasta un enter
 		_hlt();
 	} while((c=getchar()) != '\n');
-	ncClear();
+	gClear();
 	init_shell();
 	//testWrite();
 	//testRead();
-	//ncPrint("Sali del read");
+	//gPrint("Sali del read");
 	//testWrite();
 	while(1);
 	return 0;

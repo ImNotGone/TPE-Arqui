@@ -1,7 +1,7 @@
 #include <interrupts/time.h>
 #include <drivers/keyboard.h>
 #include <stdint.h>
-#include <drivers/naiveConsole.h>
+#include <drivers/graphics.h>
 
 static void int_20();
 static void int_21();
@@ -29,7 +29,7 @@ static void int_20() {
 	timer_handler();
 	// cada medio segundo actualizo el cursor
 	if(ticks_elapsed() % 9 == 0) {
-		ncCursorBlink();
+		gCursorBlink();
 	}
 	/*
 	static long secondsElapsed = 0;
