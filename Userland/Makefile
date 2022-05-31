@@ -12,7 +12,7 @@ shell:
 
 clean:
 	cd shell; make clean
-	rm -rf *.bin
+	rm -rf *.bin *.elf
 
 
 .PHONY: shell all clean
