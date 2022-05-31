@@ -4,6 +4,8 @@ section .data
     syscalltime     equ 2
     syscallmemdump  equ 3
     syscallregdump  equ 4
+    syscallDivWind  equ 5
+    syscallSwiWind  equ 6
 
 section .text
 global sysread
@@ -11,18 +13,23 @@ global syswrite
 global systime
 global sysmemdump
 global sysregdump
+global sysDivWind
+global sysSwiWind
 
-
-sysread:
+%macro syscallHandler 1
     push rbp
     mov rbp, rsp
 
-    mov rax, syscallread
+    mov rax, %1
     int 80h
 
     mov rsp, rbp
     pop rbp
     ret
+%endmacro
+
+sysread:
+    syscallHandler syscallread
 
 ;
 ; rdi -> fd
@@ -30,49 +37,22 @@ sysread:
 ; rdx -> len
 ;
 syswrite:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, syscallwrite
-    int 80h
-
-    mov rsp, rbp
-    pop rbp
-    ret
+    syscallHandler syscallwrite
 
 ; rdi -> Ttime *
 systime:
-    push rbp
-    mov rbp, rsp
-
-    mov rax, syscalltime
-    int 80h
-
-    mov rsp, rbp
-    pop rbp
-    ret
+    syscallHandler syscalltime
 
 ; rdi -> direccion
 ; rsi -> memData[]
 sysmemdump:
-    push rbp
-    mov rbp, rsp
-    
-    mov rax, syscallmemdump
-    int 80h
-    
-    mov rsp, rbp
-    pop rbp
-    ret
+    syscallHandler syscallmemdump
 
 ; rdi -> TRegs *
 sysregdump:
-    push rbp
-    mov rbp, rsp
+    syscallHandler syscallregdump
 
-    mov rax, syscallregdump
-    int 80h
-
-    mov rsp, rbp
-    pop rbp
-    ret
+sysDivWind:
+    syscallHandler syscallDivWind
+sysSwiWind:
+    syscallHandler syscallSwiWind
