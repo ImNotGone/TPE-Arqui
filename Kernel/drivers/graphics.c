@@ -14,7 +14,10 @@ static gcolor DEFAULT_BACKGROUND = {0x00, 0x00, 0x00};
 // WHITE
 static gcolor DEFAULT_FOREGROUND = {0xFF,0xFF,0xFF};
 
-static uint32_t uintToBase(uint64_t value, char * buffer, uint32_t base);
+static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base);
+
+static void replaceRow(uint8_t *filaActual, const uint8_t *filaSig);
+
 #define COLORCHANELLS 3
 
 static uint8_t * getPixel(int x, int y) {
@@ -31,20 +34,18 @@ static void drawPixel(int x, int y, gcolor color){
 static void gUpdatePos() {
     windows[currentWindow].cy += ((windows[currentWindow].cx + 1) == windows[currentWindow].width)?1:0;
     windows[currentWindow].cx = (windows[currentWindow].cx + 1)% windows[currentWindow].width;
-    return;
 }
 
 static void scrollUp(){
-    cursorActive = 0;
     // itero en las filas
-    uint8_t * filaActual    = 0;
-    uint8_t * filaSig       = 0;
+    uint8_t * filaActual;
+    uint8_t * filaSig;
     int i;
-    for(i = 0; i < (windows[currentWindow].height-1) * fontHeight; i++){
+    for(i = 0; i < (windows[currentWindow].height) * fontHeight - 1; i++){
 
         // me guardo la fila actual y la siguiente
-        filaActual = getPixel(windows[currentWindow].sx, windows[currentWindow].sy + i);
-        filaSig  = getPixel(windows[currentWindow].sx, windows[currentWindow].sy + fontHeight + i);
+        filaActual = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + i);
+        filaSig  = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + fontHeight + i);
 
         // itero por las columnas y copio la informacion 
         for(int j=0; j < windows[currentWindow].width * fontWidth * COLORCHANELLS ; j++){
@@ -53,7 +54,7 @@ static void scrollUp(){
     }
     // limpio la ultima linea
     for(;i < (windows[currentWindow].height) * fontHeight; i++) {
-        uint8_t * filaActual = getPixel(windows[currentWindow].sx, windows[currentWindow].sy + i);
+        filaActual = getPixel(windows[currentWindow].sx, windows[currentWindow].sy + i);
         for(int j=0; j < windows[currentWindow].width * fontWidth * COLORCHANELLS; j+=COLORCHANELLS){
             filaActual[j]   = DEFAULT_BACKGROUND.B;
             filaActual[j+1] = DEFAULT_BACKGROUND.G;
@@ -61,7 +62,6 @@ static void scrollUp(){
         }
     }
     windows[currentWindow].cy -= 1;
-    cursorActive = 1;
 }
 
 static void gSetCursor(gcolor color) {
@@ -75,7 +75,6 @@ static void gSetCursor(gcolor color) {
         return;
     }
     windows[currentWindow].cx = (windows[currentWindow].cx-1) % windows[currentWindow].width;
-    return;
 }
 
 void gSetDefaultBackground(gcolor background) {
@@ -86,7 +85,6 @@ void gSetDefaultForeground(gcolor foreground) {
 }
 
 void initGraphics() {
-    cursorActive = 0;
     currentWindow = 0;
     fontHeight = getFontHeight();
     fontWidth = getFontWidth();
@@ -103,8 +101,15 @@ void initGraphics() {
     cursorActive = 1;
 }
 
+void gClearAll() {
+    for (int i = 0; i < graphicsInfo->height; i++) {
+        for (int j = 0; j < graphicsInfo->width; j++)
+            drawPixel(j, i, DEFAULT_BACKGROUND);
+    }
+}
+
 void divideWindows() {
-    cursorActive = 0;
+    gClearAll();
     currentWindow = 0;
     fontHeight = getFontHeight();
     fontWidth = getFontWidth();
@@ -118,12 +123,10 @@ void divideWindows() {
     };
     // limpio todo
     windows[currentWindow] = aux;
-    gClear();
     currentWindow = 1;
     windows[currentWindow] = aux;
     windows[currentWindow].width -= 1;
     windows[currentWindow].sx = graphicsInfo->width/(fontWidth*2) + 1;
-    gClear();
     
     currentWindow = 0;
     // linea de division
@@ -133,12 +136,10 @@ void divideWindows() {
         drawPixel(x, y, DEFAULT_FOREGROUND);            
     }
     cursorActive = 1;
-    return;
 }
 
 void switchWindow() {
     currentWindow = (currentWindow+1) %2;
-    return;
 }
 
 void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
@@ -146,7 +147,6 @@ void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
         case '\b': gBackSpace(); return;
         case '\n': gNewline(); return;
     }
-    cursorActive = 0;
 
     if(windows[currentWindow].cy == windows[currentWindow].height)
         scrollUp();
@@ -214,7 +214,6 @@ void gPrintBase(uint64_t value, uint32_t base)
 
 void gClear()
 {
-    cursorActive = 0;
     windows[currentWindow].cx = 0;
     windows[currentWindow].cy = 0;
     for(int i=0; i < windows[currentWindow].height ; i++){
@@ -224,9 +223,9 @@ void gClear()
             // current bit x
             uint16_t cbx = (windows[currentWindow].sx + windows[currentWindow].cx)*fontWidth;
             uint16_t aux = cbx;
-            for(int i = 0; i < fontHeight; i++, cby++) {
+            for(int k = 0; k < fontHeight; k++, cby++) {
                 cbx = aux;
-                for(int j = 0; j < fontWidth; j++, cbx++) {
+                for(int l = 0; l < fontWidth; l++, cbx++) {
                     drawPixel(cbx, cby, DEFAULT_BACKGROUND);
                 }
             }
@@ -240,9 +239,9 @@ void gClear()
 }
 
 
-static uint32_t uintToBase(uint64_t value, char * buffer, uint32_t base)
+static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base)
 {
-	char *p = buffer;
+	char *p = buff;
 	char *p1, *p2;
 	uint32_t digits = 0;
 
@@ -255,11 +254,11 @@ static uint32_t uintToBase(uint64_t value, char * buffer, uint32_t base)
 	}
 	while (value /= base);
 
-	// Terminate string in buffer.
+	// Terminate string in buff.
 	*p = 0;
 
-	//Reverse string in buffer.
-	p1 = buffer;
+	//Reverse string in buff.
+	p1 = buff;
 	p2 = p - 1;
 	while (p1 < p2)
 	{
@@ -305,12 +304,10 @@ static void doBackSpace() {
     windows[currentWindow].cx = (windows[currentWindow].cx-1) % windows[currentWindow].width;
     gPutcharColor(' ', DEFAULT_BACKGROUND, DEFAULT_FOREGROUND);
     windows[currentWindow].cx = (windows[currentWindow].cx-1) % windows[currentWindow].width;
-    return;
 }
 
 void gBackSpace() {
 	gSetCursor(DEFAULT_BACKGROUND);
     doBackSpace();
 	gSetCursor(DEFAULT_FOREGROUND);
-    return;
 }

@@ -31,8 +31,8 @@ int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
 void systime(TTime * ts);
 void sysmemdump(uint64_t direction, int8_t *memData);
 int64_t sysregdump(TRegs *regs);
-int64_t sysDivWindow();
-int64_t sysSwitchWindow();
+void sysDivWindow();
+void sysSwitchWindow();
 
 TSyscallHandler syscallHandlers[] = {
     //0x00
@@ -56,7 +56,7 @@ static uint64_t syscallHandlersDim = sizeof(syscallHandlers) / sizeof(syscallHan
 int64_t syscallDispatcher(uint64_t rax, uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t r10, uint64_t r8) {
     //ncPrint("rax: ");
     //ncPrintHex(rax);
-    //ncNewline();
+    //ncNewline();ß
     //ncPrint("rdi: ");
     //ncPrintHex(rdi);
     //ncNewline();
@@ -152,10 +152,10 @@ int64_t sysregdump(TRegs *regs) {
     return 1;
 }
 
-int64_t sysDivWindow() {
+void sysDivWindow() {
 	divideWindows();
 }
 
-int64_t sysSwitchWindow() {
+void sysSwitchWindow() {
     switchWindow();
 }
