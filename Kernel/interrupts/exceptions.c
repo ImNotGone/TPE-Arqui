@@ -57,6 +57,7 @@ void exceptionDispatcher(int exception, uint64_t exceptionRegisters[18]) {
 		"rip   : ",
 		"rflags: ",
 	};
+	gClear();
 	gPrint("Exception ");
 	gPrintDec(exception);
 	gNewline();

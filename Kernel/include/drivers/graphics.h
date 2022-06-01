@@ -53,6 +53,7 @@ typedef struct window {
 	uint8_t sx, sy; // -> start x, start y
 	uint8_t cx, cy; // -> current x, current y
 	uint8_t height, width; // -> window height, window width
+	gcolor background, foreground; // window background, window foreground
 } gwindow;
 
 void gSetDefaultBackground(gcolor background);
@@ -72,6 +73,9 @@ void gNewline();
 void gClear();
 void gCursorBlink();
 void gBackSpace();
+
+gcolor gGetDefaultBackground();
+gcolor gGetDefaultForeground();
 
 int8_t initGraphics();
 int8_t divideWindows();

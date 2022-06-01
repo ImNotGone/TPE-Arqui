@@ -76,6 +76,7 @@ static void command_listener() {
 	}
 	commandBuffer[i] = 0;
 	putchar('\n');
+	if(strcmp(commandBuffer, "") == 0) return;
 	for (i = 0; i < commandsDim - 1; i++) {
 		if (strcmp(commandBuffer, commands[i].name) == 0) {
 			commands[i].exec();

@@ -40,7 +40,7 @@ static void scrollUp(){
     uint8_t * filaActual;
     uint8_t * filaSig;
     int i;
-    for(i = 0; i < (windows[currentWindow].height) * fontHeight - 1; i++){
+    for(i = 0; i < (windows[currentWindow].height - 1) * fontHeight; i++){
 
         // me guardo la fila actual y la siguiente
         filaActual = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + i);
@@ -65,7 +65,7 @@ static void scrollUp(){
 
 static void gSetCursor(gcolor color) {
     if(!cursorActive) return;
-    gPutcharColor('_', DEFAULT_BACKGROUND, color);
+    gPutcharColor('_', windows[currentWindow].background, color);
     if(windows[currentWindow].cx == 0){
         // subo una fila
         windows[currentWindow].cy -= 1;
@@ -77,11 +77,19 @@ static void gSetCursor(gcolor color) {
 }
 
 void gSetDefaultBackground(gcolor background) {
-    DEFAULT_BACKGROUND = background;
+    windows[currentWindow].background = background;
 }
 void gSetDefaultForeground(gcolor foreground) {
-    DEFAULT_FOREGROUND = foreground;
+    windows[currentWindow].foreground = foreground;
 }
+
+gcolor gGetDefaultBackground() {
+    return windows[currentWindow].background;
+}
+gcolor gGetDefaultForeground() {
+    return windows[currentWindow].foreground;
+}
+
 
 int8_t initGraphics() {
     cursorActive = 0;
@@ -96,6 +104,8 @@ int8_t initGraphics() {
         .cy = 0,
         .height = graphicsInfo->height/fontHeight,
         .width  = graphicsInfo->width/fontWidth,
+        .background = DEFAULT_BACKGROUND,
+        .foreground = DEFAULT_FOREGROUND,
     };
     windows[currentWindow] = aux;
     gClear();
@@ -125,14 +135,21 @@ int8_t divideWindows() {
         .cy = 0,
         .height = graphicsInfo->height/fontHeight,
         .width  = graphicsInfo->width/(fontWidth*2),
+        .background = DEFAULT_BACKGROUND,
+        .foreground = DEFAULT_FOREGROUND,
     };
     // limpio todo
     windows[currentWindow] = aux;
     currentWindow = 1;
     windows[currentWindow] = aux;
     windows[currentWindow].width -= 1;
+    /*
+    windows[currentWindow].background.R += 0x30;
+    windows[currentWindow].background.G += 0x30;
+    windows[currentWindow].background.B += 0x30;
+    */
     windows[currentWindow].sx = graphicsInfo->width/(fontWidth*2) + 1;
-    
+    // gClear() o gUpdateBackground();
     currentWindow = 0;
     // linea de division
     int x = graphicsInfo->width + fontWidth;
@@ -146,7 +163,9 @@ int8_t divideWindows() {
 
 int8_t setWindow(uint8_t window) {
     if(window > cantWindows) return -1;
+    // gClear() o gUpdateBackground();
     currentWindow = window;
+    // gClear() o gUpdateBackground();
     return 1;
 }
 
@@ -179,7 +198,7 @@ void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
 }
 
 void gPutchar(uint8_t c) {
-    gPutcharColor(c, DEFAULT_BACKGROUND, DEFAULT_FOREGROUND);
+    gPutcharColor(c, windows[currentWindow].background, windows[currentWindow].foreground);
 }
 
 void gPrintColor(const char * str, gcolor background, gcolor foreground) {
@@ -189,14 +208,14 @@ void gPrintColor(const char * str, gcolor background, gcolor foreground) {
 }
 
 void gPrint(const char * str) {
-    gPrintColor(str, DEFAULT_BACKGROUND, DEFAULT_FOREGROUND);
+    gPrintColor(str, windows[currentWindow].background, windows[currentWindow].foreground);
 }
 
 void gNewline() {
-    gSetCursor(DEFAULT_BACKGROUND);
+    gSetCursor(windows[currentWindow].background);
     windows[currentWindow].cx = 0;
     windows[currentWindow].cy += 1;
-    gSetCursor(DEFAULT_FOREGROUND);
+    gSetCursor(windows[currentWindow].foreground);
 }
 
 void gPrintDec(uint64_t value)
@@ -234,7 +253,7 @@ void gClear()
             for(int k = 0; k < fontHeight; k++, cby++) {
                 cbx = aux;
                 for(int l = 0; l < fontWidth; l++, cbx++) {
-                    drawPixel(cbx, cby, DEFAULT_BACKGROUND);
+                    drawPixel(cbx, cby, windows[currentWindow].background);
                 }
             }
             gUpdatePos();
@@ -243,7 +262,7 @@ void gClear()
     windows[currentWindow].cx = 0;
     windows[currentWindow].cy = 0;
     cursorActive = 1;
-	gSetCursor(DEFAULT_FOREGROUND);
+	gSetCursor(windows[currentWindow].foreground);
 }
 
 
@@ -281,7 +300,7 @@ static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base)
 }
 
 void gCursorBlink() {
-    gcolor foreground[] = {DEFAULT_BACKGROUND, DEFAULT_FOREGROUND};
+    gcolor foreground[] = {windows[currentWindow].background, windows[currentWindow].foreground};
     static int select = 0;
     gSetCursor(foreground[select++]);
     select = select % 2;
@@ -299,7 +318,7 @@ static void doBackSpace() {
         // me paro en la ultima posicion de la fila                    
         windows[currentWindow].cx = windows[currentWindow].width-1;
         // imprimo un "blank"
-        gPutcharColor(' ', DEFAULT_BACKGROUND, DEFAULT_FOREGROUND);
+        gPutcharColor(' ', windows[currentWindow].background, windows[currentWindow].foreground);
         // me vuelvo a mover para atras
         // subo una fila
         windows[currentWindow].cy -= 1;
@@ -310,12 +329,12 @@ static void doBackSpace() {
 
     // la fila es 0 -> la columna != 0
     windows[currentWindow].cx = (windows[currentWindow].cx-1) % windows[currentWindow].width;
-    gPutcharColor(' ', DEFAULT_BACKGROUND, DEFAULT_FOREGROUND);
+    gPutcharColor(' ', windows[currentWindow].background, windows[currentWindow].foreground);
     windows[currentWindow].cx = (windows[currentWindow].cx-1) % windows[currentWindow].width;
 }
 
 void gBackSpace() {
-	gSetCursor(DEFAULT_BACKGROUND);
+	gSetCursor(windows[currentWindow].background);
     doBackSpace();
-	gSetCursor(DEFAULT_FOREGROUND);
+	gSetCursor(windows[currentWindow].foreground);
 }

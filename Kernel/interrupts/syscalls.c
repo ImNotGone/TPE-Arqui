@@ -85,12 +85,10 @@ int64_t syscallDispatcher(uint64_t rax, uint64_t rdi, uint64_t rsi, uint64_t rdx
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes) {
     if(fd != STDOUT && fd != STDERR) return -1;
     int64_t bytesWritten;
-    static gcolor WHITE = {0xFF, 0xFF, 0xFF};
-    static gcolor BLACK = {0x00, 0x00, 0x00};
     static gcolor RED   = {0xFF, 0x00, 0x00};
-    gcolor foreground = (fd == STDOUT)? WHITE:RED;
+    gcolor foreground = (fd == STDOUT)? gGetDefaultForeground():RED;
     for(bytesWritten = 0; bytesWritten < bytes; bytesWritten++) {
-        gPutcharColor(buffer[bytesWritten], BLACK, foreground);
+        gPutcharColor(buffer[bytesWritten], gGetDefaultBackground(), foreground);
     }
     return bytesWritten;
 }
