@@ -6,7 +6,12 @@ docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -ti --name docke
 docker exec -it dockerArqui make clean    -C /root/Toolchain
 docker exec -it dockerArqui make all      -C /root/Toolchain
 docker exec -it dockerArqui make clean    -C /root/
-docker exec -it dockerArqui make all      -C /root/
+if [ "$1" == "gdb" ]
+then
+    docker exec -it dockerArqui make gdb      -C /root/
+else
+    docker exec -it dockerArqui make all      -C /root/
+fi
 docker stop dockerArqui
 docker rm dockerArqui
 
