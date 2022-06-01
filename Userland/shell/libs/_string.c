@@ -31,7 +31,6 @@ int64_t strcmp(const char * str1, const char * str2) {
     return *str1 - *str2;
 }
 
-<<<<<<< Updated upstream
 // https://stackoverflow.com/questions/17251272/implementation-of-strtol-function-cast
 int64_t strtol(const char *str, const char **endptr, int base) {
 
@@ -51,7 +50,7 @@ int64_t strtol(const char *str, const char **endptr, int base) {
     while (str[i] == ' ' || str[i] == '+')
         i++;
 
-    if (str[i] == '-'){
+    if (str[i] == '-') {
         negative = 1;
         i++;
     }
@@ -94,7 +93,7 @@ int64_t strtol(const char *str, const char **endptr, int base) {
         *endptr = &str[i - 1];
 
     return number;
-=======
+}
 int64_t strDivide(const char * str, char * buff1, char * buff2, char divider) {
     int found = 0;
     char * toInsert = buff1;
@@ -111,7 +110,6 @@ int64_t strDivide(const char * str, char * buff1, char * buff2, char divider) {
     }
     buff2[j] = '\0';
     return found;
->>>>>>> Stashed changes
 }
 
 
