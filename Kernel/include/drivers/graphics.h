@@ -73,7 +73,7 @@ void gClear();
 void gCursorBlink();
 void gBackSpace();
 
-void initGraphics();
-void divideWindows();
-void switchWindow();
+int8_t initGraphics();
+int8_t divideWindows();
+int8_t setWindow(uint8_t window);
 #endif//_GRAPHICS_H

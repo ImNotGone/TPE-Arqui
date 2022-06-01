@@ -5,7 +5,8 @@ section .data
     syscallmemdump  equ 3
     syscallregdump  equ 4
     syscallDivWind  equ 5
-    syscallSwiWind  equ 6
+    syscallSetWind  equ 6
+    syscallOneWind  equ 7
 
 section .text
 global sysread
@@ -54,5 +55,7 @@ sysregdump:
 
 sysDivWind:
     syscallHandler syscallDivWind
-sysSwiWind:
-    syscallHandler syscallSwiWind
+sysSetWind:
+    syscallHandler syscallSetWind
+sysOneWind:
+    syscallHandler syscallOneWind

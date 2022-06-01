@@ -32,7 +32,8 @@ void systime(TTime * ts);
 void sysmemdump(uint64_t direction, int8_t *memData);
 int64_t sysregdump(TRegs *regs);
 int64_t sysDivWindow();
-int64_t sysSwitchWindow();
+int64_t sysSetWindow(uint8_t window);
+int64_t sysOneWindow();
 
 TSyscallHandler syscallHandlers[] = {
     //0x00
@@ -48,7 +49,9 @@ TSyscallHandler syscallHandlers[] = {
     //0x05
     (TSyscallHandler) sysDivWindow,
     //0x06
-    (TSyscallHandler) sysSwitchWindow,
+    (TSyscallHandler) sysSetWindow,
+    //0x07
+    (TSyscallHandler) sysOneWindow,
 };
 
 static uint64_t syscallHandlersDim = sizeof(syscallHandlers) / sizeof(syscallHandlers[0]);
@@ -153,9 +156,13 @@ int64_t sysregdump(TRegs *regs) {
 }
 
 int64_t sysDivWindow() {
-	divideWindows();
+	return divideWindows();
 }
 
-int64_t sysSwitchWindow() {
-    switchWindow();
+int64_t sysSetWindow(uint8_t window) {
+    return setWindow(window);
+}
+
+int64_t sysOneWindow() {
+    return initGraphics();
 }

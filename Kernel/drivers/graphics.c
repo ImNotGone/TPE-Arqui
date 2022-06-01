@@ -2,13 +2,14 @@
 #include <drivers/font.h>
 
 static gwindow windows[2]; // -> pantallas
-static int currentWindow = 0;
+static uint8_t currentWindow = 0;
+static uint8_t cantWindows = 0;
 static char buffer[64] = { '0' };
 
 static const struct vbe_mode_info_structure * graphicsInfo = (struct vbe_mode_info_structure *) 0x5C00;
 static uint8_t fontHeight;
 static uint8_t fontWidth;
-static int cursorActive = 0;
+static uint8_t cursorActive = 0;
 // BLACK
 static gcolor DEFAULT_BACKGROUND = {0x00, 0x00, 0x00};
 // WHITE
@@ -85,9 +86,10 @@ void gSetDefaultForeground(gcolor foreground) {
     DEFAULT_FOREGROUND = foreground;
 }
 
-void initGraphics() {
+int8_t initGraphics() {
     cursorActive = 0;
     currentWindow = 0;
+    cantWindows = 1;
     fontHeight = getFontHeight();
     fontWidth = getFontWidth();
     gwindow aux = {
@@ -101,11 +103,13 @@ void initGraphics() {
     windows[currentWindow] = aux;
     gClear();
     cursorActive = 1;
+    return 1;
 }
 
-void divideWindows() {
+int8_t divideWindows() {
     cursorActive = 0;
     currentWindow = 0;
+    cantWindows = 2;
     fontHeight = getFontHeight();
     fontWidth = getFontWidth();
     gwindow aux = {
@@ -133,12 +137,13 @@ void divideWindows() {
         drawPixel(x, y, DEFAULT_FOREGROUND);            
     }
     cursorActive = 1;
-    return;
+    return 1;
 }
 
-void switchWindow() {
-    currentWindow = (currentWindow+1) %2;
-    return;
+int8_t setWindow(uint8_t window) {
+    if(window > cantWindows) return -1;
+    currentWindow = window;
+    return 1;
 }
 
 void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
