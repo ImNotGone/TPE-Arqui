@@ -37,7 +37,7 @@ extern void systime(TTime * ts);
 extern void sysmemdump(uint64_t address, int8_t *memData);
 extern int8_t sysregdump(TRegs *regs);
 extern int64_t sysDivWind();
-extern int64_t setWindow(uint8_t window);
+extern int64_t sysSetWind(uint8_t window);
 extern int64_t sysOneWind();
 
 #endif//SYSCALLS_H_

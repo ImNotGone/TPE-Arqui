@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <syscalls.h>
 
-#define BUFSIZE 8192
+#define BUFF_SIZE 8192
 #define EOF     (-1)
 #define STDIN   0
 #define STDOUT  1

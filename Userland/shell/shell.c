@@ -7,6 +7,16 @@
 
 #define UINT_MAX 4294967295
 #define COMMAND_BUFFERSIZE 256
+
+typedef void (*fp)(void);
+
+typedef struct command {
+    char * name;
+    char * desc;
+    fp exec;
+    int pausable;
+} command;
+
 static void init();
 static void command_listener();
 static void help();
@@ -17,26 +27,19 @@ static void printmem();
 static void time();
 static void primes();
 static void fibo();
-static void screenDiv();
+static void screenDiv(command leftCommand, command rightCommand);
 
-typedef void (*fp)(void);
-
-typedef struct command {
-	char * name;
-	char * desc;
-	fp exec;
-} command;
 
 static command commands[] = {
-	{"help", "shows all available commands", help},
-	{"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg},
-	{"zerodiv", "generates a zero divition exeption", zerodiv},
-	{"invalid_opcode", "generates an invalid operation exception", invalidopcode},
-	{"printmem", "prints the 32 bytes which follow the recieved address", printmem},
-	{"time", "prints the current system time", time},
-	{"primes", "prints primes", primes},
-	{"fibo", "prints the fibonacci series",fibo},
-	{"|", "allows to divide the screen and run 2 programms", screenDiv}
+	{"help", "shows all available commands", help, 0},
+	{"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg, 0},
+	{"zerodiv", "generates a zero divition exeption", zerodiv, 0},
+	{"invalid_opcode", "generates an invalid operation exception", invalidopcode, 0},
+	{"printmem", "prints the 32 bytes which follow the recieved address", printmem, 0},
+	{"time", "prints the current system time", time, 0},
+	{"primes", "prints primes", primes, 1},
+	{"fibo", "prints the fibonacci series",fibo, 1},
+	{"|", "allows to divide the screen and run 2 programms", (fp) screenDiv, 0}
 };
 
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
@@ -56,7 +59,7 @@ static void init() {
 }
 
 static void command_listener() {
-	static char commandBuffer[COMMAND_BUFFERSIZE];
+	char commandBuffer[COMMAND_BUFFERSIZE];
 	int c;
 	int i = 0;
 	while((c = getchar()) != '\n' && i < COMMAND_BUFFERSIZE) {
@@ -73,13 +76,44 @@ static void command_listener() {
 	}
 	commandBuffer[i] = 0;
 	putchar('\n');
-	for (i = 0; i < commandsDim; i++) {
+	for (i = 0; i < commandsDim - 1; i++) {
 		if (strcmp(commandBuffer, commands[i].name) == 0) {
 			commands[i].exec();
 			return;
 		}
 	}
-	printf("%s -> comando invalido\n", commandBuffer);
+    char leftStr[COMMAND_BUFFERSIZE];
+    char rightStr[COMMAND_BUFFERSIZE];
+
+    if (!strDivide(commandBuffer, leftStr, rightStr, '|')) {
+        printf("%s -> comando invalido\n", commandBuffer);
+        return;
+    }
+
+    command leftCommand, rightCommand;
+    int leftFound = 0, rightFound = 0;
+    for (i = 0; i < commandsDim - 1; i++) {
+        if (strcmp(leftStr, commands[i].name) == 0) {
+            leftCommand = commands[i];
+            leftFound = 1;
+        }
+        if (strcmp(rightStr, commands[i].name) == 0) {
+            rightFound = 1;
+            rightCommand = commands[i];
+        }
+    }
+
+    if (leftFound && rightFound) {
+        screenDiv(leftCommand, rightCommand);
+        return;
+    }
+
+    if (!leftFound)
+        printf("%s -> comando invalido\n", leftStr);
+    if (!rightFound)
+        printf("%s -> comando invalido\n", rightStr);
+
+
 }
 static void help() {
 	puts("Los comandos disponibles son:");
@@ -106,8 +140,8 @@ static void time() {
 static void primes() {
     int isPrime = 1;
     puts("Los numeros primos son:");
-    for (unsigned int number = 1; number < UINT_MAX; number+= 2, isPrime = 1) {
-        for (int i = 2; i * i <= number && isPrime; i++) {
+    for (uint64_t number = 1; number < UINT64_MAX; number+= 2, isPrime = 1) {
+        for (uint64_t i = 2; i * i <= number && isPrime; i++) {
             if (number % i == 0)
                 isPrime = 0;
         }
@@ -117,7 +151,45 @@ static void primes() {
 }
 static void fibo() {
     printf("fibo(%d) = %d\n", 0, 0);
-    for (unsigned int i = 1, prev = 0, current = 1, next = 1; current <= UINT_MAX - prev; i++, prev = current, current = next, next = prev + current)
+    for (uint64_t i = 1, prev = 0, current = 1, next = 1; current <= UINT64_MAX - prev; i++, prev = current, current = next, next = prev + current)
         printf("fibo(%d) = %d\n", i, current);
 }
-static void screenDiv() {return;}
+
+void waitForEnter() {
+	while (getchar() != '\n');
+	return;
+}
+
+void handlePipe(command leftCommand, command rightCommand) {
+	if (!leftCommand.pausable && !rightCommand.pausable) {
+		sysSetWind(0);
+        leftCommand.exec();
+		sysSetWind(1);
+        rightCommand.exec();
+		return;
+    }
+
+    if (leftCommand.pausable) {
+        sysSetWind(1);
+        rightCommand.exec();
+        sysSetWind(0);
+        leftCommand.exec();
+        return;
+    }
+
+    if (rightCommand.pausable) {
+		sysSetWind(0);
+        leftCommand.exec();
+		sysSetWind(1);
+        rightCommand.exec();
+        return;
+    }
+}
+
+static void screenDiv(command leftCommand, command rightCommand) {
+    sysDivWind();
+	handlePipe(leftCommand, rightCommand);
+	waitForEnter();
+	sysOneWind();
+    return;
+}

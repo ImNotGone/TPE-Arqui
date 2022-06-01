@@ -15,7 +15,8 @@ global systime
 global sysmemdump
 global sysregdump
 global sysDivWind
-global sysSwiWind
+global sysSetWind
+global sysOneWind
 
 %macro syscallHandler 1
     push rbp
