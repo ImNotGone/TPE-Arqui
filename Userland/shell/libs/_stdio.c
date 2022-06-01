@@ -1,5 +1,8 @@
 #include <_stdio.h>
 #include <_string.h>
+
+#define IS_DIGIT(c) (c <= '9' && c >= '0')
+
 // printf
 // http://www.firmcodes.com/write-printf-function-c/
 static char * convert(uint64_t num, uint64_t base) {
@@ -71,8 +74,70 @@ int64_t printf(const char * fmt, ...) {
     return out;
 }
 
+// https://iq.opengenus.org/how-printf-and-scanf-function-works-in-c-internally/
 int64_t scanf(const char * fmt, ...){
-    return 0;
+    va_list vl;
+    int j=0, resp = 0, buffLen = 0;
+    char buff[128] = {0}, c;
+    const char *outPos;
+
+    int i = 0;
+    while((c = (int8_t)getchar()) != '\n') {
+        if(c == '\b') {
+            if(i > 0) {
+                putchar(c);
+                i--;
+            }
+        }
+        if(c != '\b' && i < 128) {
+            putchar(c);
+            buff[i++] = c;
+        }
+    }
+    buff[i] = 0;
+    putchar('\n');
+    va_start( vl, fmt );
+    for (i = 0; fmt[i] != '\0'; i++) {
+        if (fmt[i] == '%' && fmt[i + 1] != '\0') {
+            i++;
+
+            if (IS_DIGIT(fmt[i])) {
+                buffLen = (int) strtol(&fmt[i], &outPos, 10);
+                i += (int)(outPos - &fmt[i]);
+            }
+
+
+            switch (fmt[i]) {
+                case 's': {
+                    char * aux = (char *) va_arg( vl, char * );
+                    for (int k = 0; buff[k] != '\0' && k < buffLen; k++)
+                        aux[k] = buff[j++];
+                    break;
+                }
+                case 'c': {
+                    *(char *)va_arg( vl, char* ) = buff[j];
+                    j++;
+                    resp++;
+                    break;
+                }
+                case 'd': {
+                    *(int *) va_arg( vl, int* ) = (int) strtol(&buff[j], &outPos, 10);
+                    j += (int)(outPos - &buff[j]);
+                    resp++;
+                    break;
+                }
+                case 'x': {
+                    *(int *) va_arg( vl, int* ) = (int) strtol(&buff[j], &outPos, 16);
+                    j += (int)(outPos - &buff[j]);
+                    resp++;
+                    break;
+                }
+            }
+        }
+    }
+
+    va_end(vl);
+    return resp;
 }
 
 int64_t puts(const char * str) {

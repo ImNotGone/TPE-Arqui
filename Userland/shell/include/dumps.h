@@ -1,5 +1,5 @@
-#ifndef _MEMDUMP_H
-#define _MEMDUMP_H
+#ifndef _DUMP_H
+#define _DUMP_H
 #include <_stdio.h>
 
 #define MEM_DUMP_COUNT 32
