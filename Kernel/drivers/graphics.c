@@ -17,8 +17,6 @@ static gcolor DEFAULT_FOREGROUND = {0xFF,0xFF,0xFF};
 
 static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base);
 
-static void replaceRow(uint8_t *filaActual, const uint8_t *filaSig);
-
 #define COLORCHANELLS 3
 
 static uint8_t * getPixel(int x, int y) {
