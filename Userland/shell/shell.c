@@ -5,8 +5,14 @@
 #include <_string.h>
 #include <syscalls.h>
 
-#define UINT_MAX 4294967295
-#define COMMAND_BUFFERSIZE 256
+#define COMMAND_BUFFER_SIZE 256
+
+typedef struct iterator {
+    int started;
+    int (*hasNext) (int, int);
+    void (*next) (int);
+    void (*reset) (int);
+} iterator;
 
 typedef void (*fp)(void);
 
@@ -14,7 +20,8 @@ typedef struct command {
     char * name;
     char * desc;
     fp exec;
-    int pausable;
+    iterator it;
+    int iterable;
 } command;
 
 static void init();
@@ -30,61 +37,141 @@ static void fibo();
 static void screenDiv(command leftCommand, command rightCommand);
 
 
+
+// Fibonacci
+typedef struct fiboInternalState {
+    uint64_t i;
+    uint64_t prev;
+    uint64_t current;
+    uint64_t next;
+} fiboInternalState;
+
+static fiboInternalState fiboInternalStates[] = {{0, 0, 1, 1}, {0, 0, 1, 1}};
+
+static void fiboNext(int screen) {
+    if (fiboInternalStates[screen].i == 0) {
+        printf("fibo(%d) = %d\n", 0, 0);
+        fiboInternalStates[screen].i++;
+        return;
+    }
+
+    printf("fibo(%d) = %d\n", fiboInternalStates[screen].i, fiboInternalStates[screen].current);
+    fiboInternalStates[screen].i++;
+    fiboInternalStates[screen].prev = fiboInternalStates[screen].current;
+    fiboInternalStates[screen].current = fiboInternalStates[screen].next;
+    fiboInternalStates[screen].next = fiboInternalStates[screen].prev + fiboInternalStates[screen].current;
+}
+
+static int fiboHasNext(int started, int screen) {
+    return fiboInternalStates[screen].current <= UINT64_MAX - fiboInternalStates[screen].prev;
+}
+
+static void fiboReset(int screen) {
+    fiboInternalStates[screen].i = 0;
+    fiboInternalStates[screen].prev = 0;
+    fiboInternalStates[screen].current = 1;
+    fiboInternalStates[screen].next = 1;
+}
+
+// Primes
+typedef struct primesInternalState {
+    int isPrime;
+    uint64_t number;
+} primeInternalState;
+
+static primeInternalState primeInternalStates[] = {{1, 1}, {1, 1}};
+
+static void primesNext(int screen) {
+    for (uint64_t i = 2; i * i <= primeInternalStates[screen].number && primeInternalStates[screen].isPrime; i++) {
+        if (primeInternalStates[screen].number % i == 0)
+            primeInternalStates[screen].isPrime = 0;
+    }
+    if (primeInternalStates[screen].isPrime)
+        printf("-- %d\n", primeInternalStates[screen].number);
+
+    primeInternalStates[screen].isPrime = 1;
+    primeInternalStates[screen].number += 2;
+}
+
+static int primesHasNext(int started, int screen) {
+    return primeInternalStates[screen].number <=UINT64_MAX;
+}
+
+static void primesReset(int screen) {
+    primeInternalStates[screen].isPrime = 1;
+    primeInternalStates[screen].number = 1;
+}
+
+// Printmem
+
+
+// nonIterableCommands functions
+static int nonIterableCommandHasNext(int started, int screen) {
+    return !started;
+}
+
+static void nonIterableCommandReset(int screen) {}
+
+
+
+
+
+
 static command commands[] = {
-	{"help", "shows all available commands", help, 0},
-	{"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg, 0},
-	{"zerodiv", "generates a zero divition exeption", zerodiv, 0},
-	{"invalid_opcode", "generates an invalid operation exception", invalidopcode, 0},
-	{"printmem", "prints the 32 bytes which follow the recieved address", printmem, 0},
-	{"time", "prints the current system time", time, 0},
-	{"primes", "prints primes", primes, 1},
-	{"fibo", "prints the fibonacci series",fibo, 1},
-	{"|", "allows to divide the screen and run 2 programms", (fp) screenDiv, 0}
+        {"help", "shows all available commands", help,{0,                                         nonIterableCommandHasNext, help, nonIterableCommandReset}, 0},
+        {"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg, {0, nonIterableCommandHasNext, inforeg, nonIterableCommandReset}, 0},
+        {"zerodiv", "generates a zero divition exeption", zerodiv, {0,                            nonIterableCommandHasNext, zerodiv, nonIterableCommandReset}, 0},
+        {"invalid_opcode", "generates an invalid operation exception", invalidopcode, {0,         nonIterableCommandHasNext, invalidopcode, nonIterableCommandReset}, 0},
+        {"printmem", "prints the 32 bytes which follow the recieved address", printmem, {0,       nonIterableCommandHasNext, printmem, nonIterableCommandReset}, 0},
+        {"time", "prints the current system time", time, {0,                                      nonIterableCommandHasNext, time, nonIterableCommandReset}, 0},
+        {"primes", "prints primes", primes, {0, primesHasNext, primesNext, primesReset}, 1},
+        {"fibo", "prints the fibonacci series",fibo, {0, fiboHasNext, fiboNext, fiboReset}, 1},
+        {"|", "allows to divide the screen and run 2 programms", (fp) screenDiv, {0,              nonIterableCommandHasNext, (void (*) (int))screenDiv, nonIterableCommandReset}, 0}
 };
 
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
 
 int main() {
-	init();
-	while(1) {
-		putchar('>');
-		command_listener();
-	}
+    init();
+    while(1) {
+        putchar('>');
+        command_listener();
+    }
 }
 
 
 static void init() {
-	puts("Bienvenido a la consola");
-	help();
+    puts("Bienvenido a la consola");
+    help();
 }
 
 static void command_listener() {
-	char commandBuffer[COMMAND_BUFFERSIZE];
-	int c;
-	int i = 0;
-	while((c = getchar()) != '\n' && i < COMMAND_BUFFERSIZE) {
-		if(c == '\b') {
-			if(i > 0) {
- 				putchar(c);
-				i--;
-			}
-		} 
-		if(c != '\b') {
-			putchar(c);
-			commandBuffer[i++] = c;
-		}
-	}
-	commandBuffer[i] = 0;
-	putchar('\n');
-	if(strcmp(commandBuffer, "") == 0) return;
-	for (i = 0; i < commandsDim - 1; i++) {
-		if (strcmp(commandBuffer, commands[i].name) == 0) {
-			commands[i].exec();
-			return;
-		}
-	}
-    char leftStr[COMMAND_BUFFERSIZE];
-    char rightStr[COMMAND_BUFFERSIZE];
+    char commandBuffer[COMMAND_BUFFER_SIZE];
+    int c;
+    int i = 0;
+    while((c = getchar()) != '\n' && i < COMMAND_BUFFER_SIZE) {
+        if(c == '\b') {
+            if(i > 0) {
+                putchar(c);
+                i--;
+            }
+        }
+        if(c != '\b') {
+            putchar(c);
+            commandBuffer[i++] = c;
+        }
+    }
+    commandBuffer[i] = 0;
+    putchar('\n');
+    if(strcmp(commandBuffer, "") == 0) return;
+    for (i = 0; i < commandsDim - 1; i++) {
+        if (strcmp(commandBuffer, commands[i].name) == 0) {
+            commands[i].exec();
+            return;
+        }
+    }
+    char leftStr[COMMAND_BUFFER_SIZE];
+    char rightStr[COMMAND_BUFFER_SIZE];
 
     if (!strDivide(commandBuffer, leftStr, rightStr, '|')) {
         printf("%s -> comando invalido\n", commandBuffer);
@@ -117,10 +204,10 @@ static void command_listener() {
 
 }
 static void help() {
-	puts("Los comandos disponibles son:");
-	for(int i = 0; i < commandsDim; i++) {
-		printf("%d) %s => %s\n", i, commands[i].name, commands[i].desc);
-	}
+    puts("Los comandos disponibles son:");
+    for(int i = 0; i < commandsDim; i++) {
+        printf("%d) %s => %s\n", i, commands[i].name, commands[i].desc);
+    }
 }
 static void inforeg() {
     regDump();
@@ -128,69 +215,52 @@ static void inforeg() {
 
 static void printmem() {
     uint64_t address;
-    uint8_t arr[32];
-	for(int i = 0; i < 32; i++) {
-		arr[i] = i+1;
-	}
-    scanf("%d",&address);
-    memDump((uint64_t)arr);
+    scanf("%x",&address);
+    memDump(address);
 }
 static void time() {
     printTime();
 }
 static void primes() {
-    int isPrime = 1;
-    puts("Los numeros primos son:");
-    for (uint64_t number = 1; number < UINT64_MAX; number+= 2, isPrime = 1) {
-        for (uint64_t i = 2; i * i <= number && isPrime; i++) {
-            if (number % i == 0)
-                isPrime = 0;
-        }
-        if (isPrime)
-            printf("-- %d\n", number);
-    }
+    while (primesHasNext(0, 1))
+        primesNext(1);
+    primesReset(1);
 }
 static void fibo() {
-    printf("fibo(%d) = %d\n", 0, 0);
-    for (uint64_t i = 1, prev = 0, current = 1, next = 1; current <= UINT64_MAX - prev; i++, prev = current, current = next, next = prev + current)
-        printf("fibo(%d) = %d\n", i, current);
+    while (fiboHasNext(0, 1))
+        fiboNext(1);
+    fiboReset(1);
 }
 
 void waitForEnter() {
-	while (getchar() != '\n');
-	return;
+    while (getchar() != '\n');
+    return;
 }
 
 void handlePipe(command leftCommand, command rightCommand) {
-	if (!leftCommand.pausable && !rightCommand.pausable) {
-		sysSetWind(0);
-        leftCommand.exec();
-		sysSetWind(1);
-        rightCommand.exec();
-		return;
-    }
-
-    if (leftCommand.pausable) {
-        sysSetWind(1);
-        rightCommand.exec();
+    sysDivWind();
+    while (leftCommand.it.hasNext(leftCommand.it.started, 0) || rightCommand.it.hasNext(rightCommand.it.started, 1)) {
         sysSetWind(0);
-        leftCommand.exec();
-        return;
-    }
+        // if hay q cortar programa salimos?
+        if (leftCommand.it.hasNext(leftCommand.it.started, 0)) {
+            leftCommand.it.next(0);
+            leftCommand.it.started = 1;
+        }
 
-    if (rightCommand.pausable) {
-		sysSetWind(0);
-        leftCommand.exec();
-		sysSetWind(1);
-        rightCommand.exec();
-        return;
+        sysSetWind(1);
+        if (rightCommand.it.hasNext(rightCommand.it.started, 1)) {
+            rightCommand.it.next(1);
+            rightCommand.it.started = 1;
+        }
     }
+    leftCommand.it.reset(0);
+    rightCommand.it.reset(1);
 }
 
 static void screenDiv(command leftCommand, command rightCommand) {
     sysDivWind();
-	handlePipe(leftCommand, rightCommand);
-	waitForEnter();
-	sysOneWind();
+    handlePipe(leftCommand, rightCommand);
+    waitForEnter();
+    sysOneWind();
     return;
 }
