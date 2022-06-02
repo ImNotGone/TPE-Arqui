@@ -123,10 +123,10 @@ static command commands[] = {
         {"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg,   {0, nonIterableCommandHasNext, inforeg, nonIterableCommandReset}},
         {"zerodiv", "generates a zero divition exeption", zerodiv,                              {0, nonIterableCommandHasNext, zerodiv, nonIterableCommandReset}},
         {"invalid_opcode", "generates an invalid operation exception", invalidopcode,           {0, nonIterableCommandHasNext, invalidopcode, nonIterableCommandReset}},
-        {"printmem", "prints the 32 bytes which follow the recieved address", printmem,         {0, nonIterableCommandHasNext, printmem, nonIterableCommandReset}},
         {"time", "prints the current system time", time,                                        {0, nonIterableCommandHasNext, time, nonIterableCommandReset}},
         {"primes", "prints primes", primes,                                                     {0, primesHasNext, primesNext, primesReset}},
         {"fibo", "prints the fibonacci series",fibo,                                            {0, fiboHasNext, fiboNext, fiboReset}},
+        {"printmem", "prints the 32 bytes which follow the recieved address", printmem,         {0, nonIterableCommandHasNext, printmem, nonIterableCommandReset}},
         {"|", "allows to divide the screen and run 2 programms", (fp) screenDiv,                {0, nonIterableCommandHasNext, (void (*) (int))screenDiv, nonIterableCommandReset}}
 };
 
@@ -165,11 +165,28 @@ static void command_listener() {
     commandBuffer[i] = 0;
     putchar('\n');
     if(strcmp(commandBuffer, "") == 0) return;
-    for (i = 0; i < commandsDim - 1; i++) {
+    for (i = 0; i < commandsDim - 2; i++) {
         if (strcmp(commandBuffer, commands[i].name) == 0) {
             commands[i].exec();
             return;
         }
+    }
+    if (strncmp(commandBuffer, "printmem", 8) == 0) {
+        if (commandBuffer[8] == ' ' && commandBuffer[9] != ' ') { //argumentos igual que en linux
+            char argument[COMMAND_BUFFER_SIZE];
+            for (i = 9; commandBuffer[i] != '\0' && i - 9 < COMMAND_BUFFER_SIZE; i++)
+                argument[i - 9] = commandBuffer[i];
+            const char * out;
+            int64_t address = strtol(argument, &out, 16);
+            if (address < 0) {
+                puts("Direccion de memoria invalida");
+                return;
+            }
+            printmem(address);
+            return;
+        }
+        puts("Argumento invalido");
+        return;
     }
     char leftStr[COMMAND_BUFFER_SIZE];
     char rightStr[COMMAND_BUFFER_SIZE];
@@ -214,9 +231,7 @@ static void inforeg() {
     regDump();
 }
 
-static void printmem() {
-    uint64_t address;
-    scanf("%x",&address);
+static void printmem(uint64_t address) {
     memDump(address);
 }
 static void time() {
