@@ -21,7 +21,6 @@ typedef struct command {
     char * desc;
     fp exec;
     iterator it;
-    int iterable;
 } command;
 
 static void init();
@@ -102,9 +101,6 @@ static void primesReset(int screen) {
     primeInternalStates[screen].number = 1;
 }
 
-// Printmem
-
-
 // nonIterableCommands functions
 static int nonIterableCommandHasNext(int started, int screen) {
     return !started;
@@ -118,15 +114,15 @@ static void nonIterableCommandReset(int screen) {}
 
 
 static command commands[] = {
-        {"help", "shows all available commands", help,{0,                                         nonIterableCommandHasNext, help, nonIterableCommandReset}, 0},
-        {"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg, {0, nonIterableCommandHasNext, inforeg, nonIterableCommandReset}, 0},
-        {"zerodiv", "generates a zero divition exeption", zerodiv, {0,                            nonIterableCommandHasNext, zerodiv, nonIterableCommandReset}, 0},
-        {"invalid_opcode", "generates an invalid operation exception", invalidopcode, {0,         nonIterableCommandHasNext, invalidopcode, nonIterableCommandReset}, 0},
-        {"printmem", "prints the 32 bytes which follow the recieved address", printmem, {0,       nonIterableCommandHasNext, printmem, nonIterableCommandReset}, 0},
-        {"time", "prints the current system time", time, {0,                                      nonIterableCommandHasNext, time, nonIterableCommandReset}, 0},
-        {"primes", "prints primes", primes, {0, primesHasNext, primesNext, primesReset}, 1},
-        {"fibo", "prints the fibonacci series",fibo, {0, fiboHasNext, fiboNext, fiboReset}, 1},
-        {"|", "allows to divide the screen and run 2 programms", (fp) screenDiv, {0,              nonIterableCommandHasNext, (void (*) (int))screenDiv, nonIterableCommandReset}, 0}
+        {"help", "shows all available commands", help,                                          {0, nonIterableCommandHasNext, help, nonIterableCommandReset}},
+        {"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg,   {0, nonIterableCommandHasNext, inforeg, nonIterableCommandReset}},
+        {"zerodiv", "generates a zero divition exeption", zerodiv,                              {0, nonIterableCommandHasNext, zerodiv, nonIterableCommandReset}},
+        {"invalid_opcode", "generates an invalid operation exception", invalidopcode,           {0, nonIterableCommandHasNext, invalidopcode, nonIterableCommandReset}},
+        {"printmem", "prints the 32 bytes which follow the recieved address", printmem,         {0, nonIterableCommandHasNext, printmem, nonIterableCommandReset}},
+        {"time", "prints the current system time", time,                                        {0, nonIterableCommandHasNext, time, nonIterableCommandReset}},
+        {"primes", "prints primes", primes,                                                     {0, primesHasNext, primesNext, primesReset}},
+        {"fibo", "prints the fibonacci series",fibo,                                            {0, fiboHasNext, fiboNext, fiboReset}},
+        {"|", "allows to divide the screen and run 2 programms", (fp) screenDiv,                {0, nonIterableCommandHasNext, (void (*) (int))screenDiv, nonIterableCommandReset}}
 };
 
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
@@ -234,7 +230,6 @@ static void fibo() {
 
 void waitForEnter() {
     while (getchar() != '\n');
-    return;
 }
 
 void handlePipe(command leftCommand, command rightCommand) {
@@ -262,5 +257,4 @@ static void screenDiv(command leftCommand, command rightCommand) {
     handlePipe(leftCommand, rightCommand);
     waitForEnter();
     sysOneWind();
-    return;
 }
