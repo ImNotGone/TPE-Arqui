@@ -99,12 +99,17 @@ int64_t strDivide(const char * str, char * buff1, char * buff2, char divider) {
     char * toInsert = buff1;
     int i,j;
     for (i = 0, j = 0; str[i] != '\0'; i++) {
+        while (str[i] == ' ')
+            i++;
         if (str[i] == divider && !found) {
             found = 1;
             toInsert = buff2;
             buff1[j] = '\0';
             j = 0;
             i++;
+            while (str[i] == ' ')
+                i++;
+
         }
         toInsert[j++] = str[i];
     }
