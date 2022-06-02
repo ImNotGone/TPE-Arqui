@@ -53,7 +53,7 @@ static void scrollUp(){
     }
     // limpio la ultima linea
     for(;i < (windows[currentWindow].height) * fontHeight; i++) {
-        filaActual = getPixel(windows[currentWindow].sx, windows[currentWindow].sy + i);
+        filaActual = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + i);
         for(int j=0; j < windows[currentWindow].width * fontWidth * COLORCHANELLS; j+=COLORCHANELLS){
             filaActual[j]   = DEFAULT_BACKGROUND.B;
             filaActual[j+1] = DEFAULT_BACKGROUND.G;
