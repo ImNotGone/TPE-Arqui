@@ -5,7 +5,7 @@ void memDump(uint64_t address) {
     sysmemdump(address, memData);
     printf("Imprimiendo %d bytes desde la posicion %x :\n", MEM_DUMP_COUNT, address);
     for (int i = 0; i < MEM_DUMP_COUNT; i++)
-        printf("%x: %x\n", address + i, memData[i]);
+        printf("%x: %x\n", address + i, 0xFF & memData[i]);
 }
 
 void regDump() {

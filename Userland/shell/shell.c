@@ -115,8 +115,8 @@ static void nonIterableCommandReset(int screen) {}
 
 
 
-
-static int exited[] = {0, 0};
+static int stoped = 0;
+static int paused[] = {0, 0};
 
 static command commands[] = {
         {"help", "shows all available commands", help,                                          {0, nonIterableCommandHasNext, help, nonIterableCommandReset}},
@@ -238,20 +238,25 @@ static void time() {
     printTime();
 }
 static void primes() {
-    while (!exited[FULL_SCREEN] && primesHasNext(0, FULL_SCREEN)) {
-        primesNext(FULL_SCREEN);
+    while (!stoped && primesHasNext(0, FULL_SCREEN)) {
+        if(!paused[FULL_SCREEN])
+            primesNext(FULL_SCREEN);
         checkExited();
     }
     primesReset(FULL_SCREEN);
     resetExited();
+    stoped = 0;
 }
 static void fibo() {
-    while (!exited[FULL_SCREEN] && fiboHasNext(0, FULL_SCREEN)) {
-        fiboNext(FULL_SCREEN);
+
+    while (!stoped && fiboHasNext(0, FULL_SCREEN)) {
+        if(!paused[FULL_SCREEN])
+            fiboNext(FULL_SCREEN);
         checkExited();
     }
     fiboReset(FULL_SCREEN);
     resetExited();
+    stoped = 0;
 }
 
 static void waitForEnter() {
@@ -260,36 +265,32 @@ static void waitForEnter() {
 
 static void checkExited() {
     char c;
-    sysread(STDIN, &c, 1);
-    if (c == 's') {
-        exited[LEFT_SCREEN] = 1;
-        exited[RIGHT_SCREEN] = 1;
-        return;
+    if(sysread(STDIN, &c, 1) == 0) return;
+    switch (c) {
+        case 's': stoped = 1; break;
+        case 'a': paused[LEFT_SCREEN] = !paused[LEFT_SCREEN]; break;
+        case 'd': paused[RIGHT_SCREEN] = !paused[RIGHT_SCREEN]; break;
+        default:break;
     }
-    if (c == 'a')
-        exited[LEFT_SCREEN] = 1;
-    if (c == 'd')
-        exited[RIGHT_SCREEN] = 1;
 }
 
 static void resetExited() {
-    exited[LEFT_SCREEN] = 0;
-    exited[RIGHT_SCREEN] = 0;
+    paused[LEFT_SCREEN] = 0;
+    paused[RIGHT_SCREEN] = 0;
 }
 
 static void handlePipe(command leftCommand, command rightCommand) {
     sysDivWind();
-    while ((!exited[LEFT_SCREEN] && leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN)) || (!exited[RIGHT_SCREEN] && rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN))) {
+    while (!stoped && (leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN) || rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN))) {
         checkExited();
         sysSetWind(LEFT_SCREEN);
         // if hay q cortar programa salimos?
-        if (!exited[LEFT_SCREEN] && leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN)) {
+        if (!paused[LEFT_SCREEN] && leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN)) {
             leftCommand.it.next(LEFT_SCREEN);
             leftCommand.it.started = 1;
         }
-        checkExited();
         sysSetWind(RIGHT_SCREEN);
-        if (!exited[RIGHT_SCREEN] && rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN)) {
+        if (!paused[RIGHT_SCREEN] && rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN)) {
             rightCommand.it.next(RIGHT_SCREEN);
             rightCommand.it.started = 1;
         }
@@ -302,6 +303,11 @@ static void handlePipe(command leftCommand, command rightCommand) {
 static void screenDiv(command leftCommand, command rightCommand) {
     sysDivWind();
     handlePipe(leftCommand, rightCommand);
+    if(stoped) {
+        stoped = 0;
+        sysOneWind();
+        return;
+    }
     waitForEnter();
     sysOneWind();
 }
