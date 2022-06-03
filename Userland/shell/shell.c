@@ -201,11 +201,13 @@ static void command_listener() {
         if (address == INVALID_ADDRESS)
             puts("Argumento invalido");
 
+        if (address == NOT_PRINTMEM)
+            printf("%s -> comando invalido\n", commandBuffer);
+
         if (address >= 0)
             printmem(address);
 
-        if (address != NOT_PRINTMEM)
-            return;
+        return;
     }
 
     command leftCommand, rightCommand;
