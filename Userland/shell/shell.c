@@ -12,9 +12,11 @@
 #define FALSE 0
 #define TRUE !FALSE
 
+#define NO_PROGRAM_RUNNING -1
 #define ARGUMENT_MISSING -1
 #define NOT_PRINTMEM -2
 #define INVALID_ADDRESS -3
+
 typedef struct iterator {
     int started;
     int (*hasNext) (int, int);
@@ -42,8 +44,10 @@ static void time();
 static void primes();
 static void fibo();
 static void screenDiv(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress);
+static void waitForEnter();
 static void checkExited();
 static void resetPaused();
+static void resetRunning();
 static int64_t parsePrintmem(char * commandBuffer);
 
 
@@ -130,7 +134,7 @@ static int nonIterableCommandHasNext(int started, int screen) {
 
 static void nonIterableCommandReset(int screen) {}
 
-
+static int running[] = {NO_PROGRAM_RUNNING, NO_PROGRAM_RUNNING};
 
 static int stoped = FALSE;
 static int paused[] = {FALSE, FALSE};
@@ -150,7 +154,45 @@ static command commands[] = {
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
 
 int main() {
+    if (running[LEFT_SCREEN] >= 0 && running[RIGHT_SCREEN] >= 0) {
+        puts("Se ha reiniciado el kernel mientras se corrian programas");
+        printf("En la ventana izquierda se estaba corriendo: %s\nEn la ventana derecha se estaba corriendo: %s\n", commands[running[LEFT_SCREEN]].name, commands[running[RIGHT_SCREEN]].name);
+        char c;
+        do {
+            printf("Si desea reaunudar %s presione 0\nSi desea reaunudar %s presione 1\nSi desea reaunudar ambos programas presione 2\nSi desea volver a la terminal presione 3\n", commands[running[LEFT_SCREEN]].name, commands[running[RIGHT_SCREEN]].name);
+        } while ((c = getchar()) < '0' || c > '3');
+
+        switch (c) {
+            case '0':
+                commands[running[RIGHT_SCREEN]].it.reset(RIGHT_SCREEN); running[RIGHT_SCREEN] = NO_PROGRAM_RUNNING; commands[running[LEFT_SCREEN]].exec(); waitForEnter();break;
+            case '1':
+                commands[running[LEFT_SCREEN]].it.reset(LEFT_SCREEN); running[LEFT_SCREEN] = NO_PROGRAM_RUNNING; commands[running[RIGHT_SCREEN]].exec(); waitForEnter();break;
+            case '2':
+                screenDiv(commands[running[LEFT_SCREEN]], commands[running[RIGHT_SCREEN]], -1, -1); break;
+            default:
+                break;
+        }
+
+        if (running[LEFT_SCREEN] >= 0)
+            commands[running[LEFT_SCREEN]].it.reset(LEFT_SCREEN);
+        if (running[RIGHT_SCREEN]>= 0)
+            commands[running[RIGHT_SCREEN]].it.reset(RIGHT_SCREEN);
+
+    } else if (running[LEFT_SCREEN] >= 0 || running[RIGHT_SCREEN] >= 0) {
+        int runningScreen = running[LEFT_SCREEN] >= 0 ? LEFT_SCREEN : RIGHT_SCREEN;
+        printf("Se ha reiniciado el kernel mientras se corria %s\n", commands[running[FULL_SCREEN]].name);
+        char c;
+        do {
+            puts("Si desea reaunudar el programa presione 0\nSi desea volver a la terminal presione 1");
+        } while ((c = getchar()) < '0' || c > '1');
+
+        if (c == '0')
+            commands[running[runningScreen]].exec();
+
+        commands[running[runningScreen]].it.reset(runningScreen);
+    }
     init();
+
     while(1) {
         putchar('>');
         command_listener();
@@ -159,6 +201,9 @@ int main() {
 
 
 static void init() {
+    sysOneWind();
+    resetRunning();
+    resetPaused();
     puts("Bienvenido a la consola");
     help();
 }
@@ -184,7 +229,9 @@ static void command_listener() {
     if(strcmp(commandBuffer, "") == 0) return;
     for (i = 0; i < commandsDim - 2; i++) {
         if (strcmp(commandBuffer, commands[i].name) == 0) {
+            running[FULL_SCREEN] = i;
             commands[i].exec();
+            running[FULL_SCREEN] = NO_PROGRAM_RUNNING;
             return;
         }
     }
@@ -204,8 +251,12 @@ static void command_listener() {
         if (address == NOT_PRINTMEM)
             printf("%s -> comando invalido\n", commandBuffer);
 
-        if (address >= 0)
+        if (address >= 0) {
+            running[FULL_SCREEN] = 7;
             printmem(address);
+            running[FULL_SCREEN] = NO_PROGRAM_RUNNING;
+        }
+
 
         return;
     }
@@ -216,10 +267,12 @@ static void command_listener() {
         if (strcmp(leftStr, commands[i].name) == 0) {
             leftCommand = commands[i];
             leftFound = TRUE;
+            running[LEFT_SCREEN] = i;
         }
         if (strcmp(rightStr, commands[i].name) == 0) {
             rightFound = TRUE;
             rightCommand = commands[i];
+            running[RIGHT_SCREEN] = i;
         }
     }
 
@@ -230,6 +283,7 @@ static void command_listener() {
         if (leftAddress >= 0) {
             leftCommand = commands[7];
             leftFound = TRUE;
+            running[LEFT_SCREEN] = 7;
         }
     }
 
@@ -238,6 +292,7 @@ static void command_listener() {
         if (rightAddress >= 0) {
             rightCommand = commands[7];
             rightFound = TRUE;
+            running[RIGHT_SCREEN] = 7;
         }
     }
 
@@ -245,7 +300,7 @@ static void command_listener() {
         screenDiv(leftCommand, rightCommand, leftAddress, rightAddress);
         return;
     }
-
+    resetRunning();
     if (!leftFound) {
         if (leftAddress == ARGUMENT_MISSING)
             puts("printmem de la izquierda debe recibir la direccion como argumento");
@@ -353,6 +408,11 @@ static void resetPaused() {
     paused[RIGHT_SCREEN] = FALSE;
 }
 
+static void resetRunning() {
+    running[LEFT_SCREEN] = NO_PROGRAM_RUNNING;
+    running[RIGHT_SCREEN] = NO_PROGRAM_RUNNING;
+}
+
 static void handlePipe(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress) {
     sysDivWind();
     while (!stoped && (leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN) || rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN))) {
@@ -373,6 +433,7 @@ static void handlePipe(command leftCommand, command rightCommand, int64_t leftAd
     leftCommand.it.reset(LEFT_SCREEN);
     rightCommand.it.reset(RIGHT_SCREEN);
     resetPaused();
+    resetRunning();
 }
 
 static void screenDiv(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress) {
