@@ -88,17 +88,33 @@ int64_t strtol(const char *str, const char **endptr, int base) {
         i = 0;
 
     if (endptr)
-        *endptr = &str[i - 1];
+        *endptr = &str[i];
 
     return number;
 }
+
+void trim(char *str) {
+    uint64_t len = strlen(str);
+    uint64_t i, j, k;
+    for (i = 0; str[i] == ' '; i++);
+
+    if (str[i] == '\0')
+        return;
+
+    for (j = strlen(str) - 1; j >= 0 && str[j] == ' '; j--);
+
+    for (k = 0; i <= j; k++, i++)
+        str[k] = str[i];
+
+    str[k] = '\0';
+
+}
+
 int64_t strDivide(const char * str, char * buff1, char * buff2, char divider) {
     int found = 0;
     char * toInsert = buff1;
     int i,j;
     for (i = 0, j = 0; str[i] != '\0'; i++) {
-        while (str[i] == ' ')
-            i++;
         if (str[i] == divider && !found) {
             found = 1;
             toInsert = buff2;
@@ -112,6 +128,10 @@ int64_t strDivide(const char * str, char * buff1, char * buff2, char divider) {
         toInsert[j++] = str[i];
     }
     buff2[j] = '\0';
+
+    trim(buff1);
+    trim(buff2);
+
     return found;
 }
 

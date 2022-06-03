@@ -12,10 +12,13 @@
 #define FALSE 0
 #define TRUE !FALSE
 
+#define ARGUMENT_MISSING -1
+#define NOT_PRINTMEM -2
+#define INVALID_ADDRESS -3
 typedef struct iterator {
     int started;
     int (*hasNext) (int, int);
-    void (*next) (int);
+    void (*next) (int64_t);
     void (*reset) (int);
 } iterator;
 
@@ -38,9 +41,10 @@ static void printmem();
 static void time();
 static void primes();
 static void fibo();
-static void screenDiv(command leftCommand, command rightCommand);
+static void screenDiv(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress);
 static void checkExited();
-static void resetExited();
+static void resetPaused();
+static int64_t parsePrintmem(char * commandBuffer);
 
 
 
@@ -184,34 +188,29 @@ static void command_listener() {
             return;
         }
     }
-    if (strncmp(commandBuffer, "printmem", 8) == 0) {
-        if (commandBuffer[8] == ' ' && commandBuffer[9] != ' ') { //argumentos igual que en linux
-            char argument[COMMAND_BUFFER_SIZE];
-            for (i = 9; commandBuffer[i] != '\0' && i - 9 < COMMAND_BUFFER_SIZE; i++)
-                argument[i - 9] = commandBuffer[i];
-            const char * out;
-            int64_t address = strtol(argument, &out, 16);
-            if (address < 0) {
-                puts("Direccion de memoria invalida");
-                return;
-            }
-            printmem(address);
-            return;
-        }
-        puts("Argumento invalido");
-        return;
-    }
+
     char leftStr[COMMAND_BUFFER_SIZE];
     char rightStr[COMMAND_BUFFER_SIZE];
 
     if (!strDivide(commandBuffer, leftStr, rightStr, '|')) {
-        printf("%s -> comando invalido\n", commandBuffer);
-        return;
+        int64_t address = parsePrintmem(commandBuffer);
+
+        if (address == ARGUMENT_MISSING)
+            puts("printmem debe recibir la direccion como argumento");
+
+        if (address == INVALID_ADDRESS)
+            puts("Argumento invalido");
+
+        if (address >= 0)
+            printmem(address);
+
+        if (address != NOT_PRINTMEM)
+            return;
     }
 
     command leftCommand, rightCommand;
     int leftFound = FALSE, rightFound = FALSE;
-    for (i = 0; i < commandsDim - 1; i++) {
+    for (i = 0; i < commandsDim - 2; i++) {
         if (strcmp(leftStr, commands[i].name) == 0) {
             leftCommand = commands[i];
             leftFound = TRUE;
@@ -222,17 +221,50 @@ static void command_listener() {
         }
     }
 
+    int64_t leftAddress = -1, rightAddress = -1;
+
+    if (!leftFound) {
+        leftAddress = parsePrintmem(leftStr);
+        if (leftAddress >= 0) {
+            leftCommand = commands[7];
+            leftFound = TRUE;
+        }
+    }
+
+    if (!rightFound) {
+        rightAddress = parsePrintmem(rightStr);
+        if (rightAddress >= 0) {
+            rightCommand = commands[7];
+            rightFound = TRUE;
+        }
+    }
+
     if (leftFound && rightFound) {
-        screenDiv(leftCommand, rightCommand);
+        screenDiv(leftCommand, rightCommand, leftAddress, rightAddress);
         return;
     }
 
-    if (!leftFound)
-        printf("%s -> comando invalido\n", leftStr);
-    if (!rightFound)
-        printf("%s -> comando invalido\n", rightStr);
+    if (!leftFound) {
+        if (leftAddress == ARGUMENT_MISSING)
+            puts("printmem de la izquierda debe recibir la direccion como argumento");
 
+        if (leftAddress == INVALID_ADDRESS)
+            puts("Argumento del printmem de la izquierda invalido");
 
+        if (leftAddress == NOT_PRINTMEM)
+            printf("%s -> comando invalido\n", leftStr);
+    }
+
+    if (!rightFound) {
+        if (rightAddress == ARGUMENT_MISSING)
+            puts("printmem de la derecha debe recibir la direccion como argumento");
+
+        if (rightAddress == INVALID_ADDRESS)
+            puts("Argumento del printmem de la derecha invalido");
+
+        if (rightAddress == NOT_PRINTMEM)
+            printf("%s -> comando invalido\n", rightStr);
+    }
 }
 static void help() {
     puts("Los comandos disponibles son:");
@@ -257,7 +289,7 @@ static void primes() {
         checkExited();
     }
     primesReset(FULL_SCREEN);
-    resetExited();
+    resetPaused();
     stoped = FALSE;
 }
 static void fibo() {
@@ -268,8 +300,35 @@ static void fibo() {
         checkExited();
     }
     fiboReset(FULL_SCREEN);
-    resetExited();
+    resetPaused();
     stoped = FALSE;
+}
+
+static int64_t parsePrintmem(char * commandBuffer) {
+    if (strcmp(commandBuffer, "printmem") == 0)
+        return ARGUMENT_MISSING;
+
+    if (strncmp(commandBuffer, "printmem ", 9) != 0)
+        return NOT_PRINTMEM;
+
+    int i = 9;
+    int j;
+    while (commandBuffer[i] == ' ')
+        i++;
+
+    char argument[COMMAND_BUFFER_SIZE];
+
+    for (j = 0; commandBuffer[i] != '\0' && j < COMMAND_BUFFER_SIZE; i++, j++)
+        argument[j] = commandBuffer[i];
+    argument[j] = '\0';
+
+    const char * out;
+    int64_t address = strtol(argument, &out, 16);
+
+    if (address < 0 || *out !='\0')
+        return INVALID_ADDRESS;
+
+    return address;
 }
 
 static void waitForEnter() {
@@ -287,35 +346,36 @@ static void checkExited() {
     }
 }
 
-static void resetExited() {
+static void resetPaused() {
     paused[LEFT_SCREEN] = FALSE;
     paused[RIGHT_SCREEN] = FALSE;
 }
 
-static void handlePipe(command leftCommand, command rightCommand) {
+static void handlePipe(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress) {
     sysDivWind();
     while (!stoped && (leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN) || rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN))) {
         checkExited();
+
         sysSetWind(LEFT_SCREEN);
-        // if hay q cortar programa salimos?
         if (!paused[LEFT_SCREEN] && leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN)) {
-            leftCommand.it.next(LEFT_SCREEN);
+            leftCommand.it.next((leftAddress) >= 0 ? leftAddress : LEFT_SCREEN);
             leftCommand.it.started = TRUE;
         }
+
         sysSetWind(RIGHT_SCREEN);
         if (!paused[RIGHT_SCREEN] && rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN)) {
-            rightCommand.it.next(RIGHT_SCREEN);
+            rightCommand.it.next((rightAddress) >= 0 ? rightAddress : LEFT_SCREEN);
             rightCommand.it.started = TRUE;
         }
     }
     leftCommand.it.reset(LEFT_SCREEN);
     rightCommand.it.reset(RIGHT_SCREEN);
-    resetExited();
+    resetPaused();
 }
 
-static void screenDiv(command leftCommand, command rightCommand) {
+static void screenDiv(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress) {
     sysDivWind();
-    handlePipe(leftCommand, rightCommand);
+    handlePipe(leftCommand, rightCommand, leftAddress, rightAddress);
     if(stoped) {
         stoped = FALSE;
         sysOneWind();
