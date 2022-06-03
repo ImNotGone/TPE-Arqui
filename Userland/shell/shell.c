@@ -364,7 +364,7 @@ static void handlePipe(command leftCommand, command rightCommand, int64_t leftAd
 
         sysSetWind(RIGHT_SCREEN);
         if (!paused[RIGHT_SCREEN] && rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN)) {
-            rightCommand.it.next((rightAddress) >= 0 ? rightAddress : LEFT_SCREEN);
+            rightCommand.it.next((rightAddress) >= 0 ? rightAddress : RIGHT_SCREEN);
             rightCommand.it.started = TRUE;
         }
     }
