@@ -9,6 +9,8 @@
 #define LEFT_SCREEN 0
 #define FULL_SCREEN 0
 #define RIGHT_SCREEN 1
+#define FALSE 0
+#define TRUE !FALSE
 
 typedef struct iterator {
     int started;
@@ -79,22 +81,34 @@ static void fiboReset(int screen) {
 
 // Primes
 typedef struct primesInternalState {
-    int isPrime;
     uint64_t number;
 } primeInternalState;
 
-static primeInternalState primeInternalStates[] = {{1, 1}, {1, 1}};
+static primeInternalState primeInternalStates[] = {{1}, {1}};
+
+static int isPrime(int n) {
+    if(n <= 1) return FALSE;
+    if(n <= 3) return TRUE;
+    if(n % 2 == 0 || n % 3 == 0) return FALSE;
+
+    for(uint64_t i = 5; i * i <= n; i +=6) {
+        if(n % i == 0 || n % (i+2) == 0) 
+            return FALSE;
+    }
+    return TRUE;
+}
+
+static int calculateNextPrime(int n) {
+    do {
+        n++;
+    }while (!isPrime(n));
+    return n;    
+}
 
 static void primesNext(int screen) {
-    for (uint64_t i = 2; i * i <= primeInternalStates[screen].number && primeInternalStates[screen].isPrime; i++) {
-        if (primeInternalStates[screen].number % i == 0)
-            primeInternalStates[screen].isPrime = 0;
-    }
-    if (primeInternalStates[screen].isPrime)
-        printf("-- %d\n", primeInternalStates[screen].number);
-
-    primeInternalStates[screen].isPrime = 1;
-    primeInternalStates[screen].number += 2;
+    int n = calculateNextPrime(primeInternalStates[screen].number);
+    printf("-- %d\n", n);
+    primeInternalStates[screen].number = n;
 }
 
 static int primesHasNext(int started, int screen) {
@@ -102,7 +116,6 @@ static int primesHasNext(int started, int screen) {
 }
 
 static void primesReset(int screen) {
-    primeInternalStates[screen].isPrime = 1;
     primeInternalStates[screen].number = 1;
 }
 
@@ -115,8 +128,8 @@ static void nonIterableCommandReset(int screen) {}
 
 
 
-static int stoped = 0;
-static int paused[] = {0, 0};
+static int stoped = FALSE;
+static int paused[] = {FALSE, FALSE};
 
 static command commands[] = {
         {"help", "shows all available commands", help,                                          {0, nonIterableCommandHasNext, help, nonIterableCommandReset}},
@@ -197,14 +210,14 @@ static void command_listener() {
     }
 
     command leftCommand, rightCommand;
-    int leftFound = 0, rightFound = 0;
+    int leftFound = FALSE, rightFound = FALSE;
     for (i = 0; i < commandsDim - 1; i++) {
         if (strcmp(leftStr, commands[i].name) == 0) {
             leftCommand = commands[i];
-            leftFound = 1;
+            leftFound = TRUE;
         }
         if (strcmp(rightStr, commands[i].name) == 0) {
-            rightFound = 1;
+            rightFound = TRUE;
             rightCommand = commands[i];
         }
     }
@@ -245,7 +258,7 @@ static void primes() {
     }
     primesReset(FULL_SCREEN);
     resetExited();
-    stoped = 0;
+    stoped = FALSE;
 }
 static void fibo() {
 
@@ -256,7 +269,7 @@ static void fibo() {
     }
     fiboReset(FULL_SCREEN);
     resetExited();
-    stoped = 0;
+    stoped = FALSE;
 }
 
 static void waitForEnter() {
@@ -275,8 +288,8 @@ static void checkExited() {
 }
 
 static void resetExited() {
-    paused[LEFT_SCREEN] = 0;
-    paused[RIGHT_SCREEN] = 0;
+    paused[LEFT_SCREEN] = FALSE;
+    paused[RIGHT_SCREEN] = FALSE;
 }
 
 static void handlePipe(command leftCommand, command rightCommand) {
@@ -287,12 +300,12 @@ static void handlePipe(command leftCommand, command rightCommand) {
         // if hay q cortar programa salimos?
         if (!paused[LEFT_SCREEN] && leftCommand.it.hasNext(leftCommand.it.started, LEFT_SCREEN)) {
             leftCommand.it.next(LEFT_SCREEN);
-            leftCommand.it.started = 1;
+            leftCommand.it.started = TRUE;
         }
         sysSetWind(RIGHT_SCREEN);
         if (!paused[RIGHT_SCREEN] && rightCommand.it.hasNext(rightCommand.it.started, RIGHT_SCREEN)) {
             rightCommand.it.next(RIGHT_SCREEN);
-            rightCommand.it.started = 1;
+            rightCommand.it.started = TRUE;
         }
     }
     leftCommand.it.reset(LEFT_SCREEN);
@@ -304,7 +317,7 @@ static void screenDiv(command leftCommand, command rightCommand) {
     sysDivWind();
     handlePipe(leftCommand, rightCommand);
     if(stoped) {
-        stoped = 0;
+        stoped = FALSE;
         sysOneWind();
         return;
     }
