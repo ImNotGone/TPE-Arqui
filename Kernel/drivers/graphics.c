@@ -178,7 +178,7 @@ void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
     if(windows[currentWindow].cy == windows[currentWindow].height)
         scrollUp();
     
-    uint8_t * bitmap = getcharFont(c);
+    const uint8_t * bitmap = getcharFont(c);
     // current bit y
     uint16_t cby = (windows[currentWindow].sy + windows[currentWindow].cy)*fontHeight;
     // current bit x

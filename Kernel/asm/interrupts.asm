@@ -109,6 +109,9 @@ SECTION .text
 	mov rdi, %1 ; pasaje de parametro
 	mov rsi, exceptionRegisters
 	call exceptionDispatcher
+	
+	; reset hardware interrupts
+	sti
 	popState
 	iretq
 %endmacro
@@ -242,6 +245,7 @@ haltcpu:
 	ret
 
 restartKernel:
+	sti
 	call getStackBase
 	mov rsp, rax	; reinicio el stack
 	call main

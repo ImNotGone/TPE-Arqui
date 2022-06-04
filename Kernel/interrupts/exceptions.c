@@ -74,13 +74,15 @@ void exceptionDispatcher(int exception, uint64_t exceptionRegisters[18]) {
 
 static void excepHandler(fp handler){
 	handler();
+	/*
 	gPrint("Presione enter para continuar");
 	int c;
 	do{
 		// freno la ejecucion del programa hasta un enter
 		_hlt();
 	} while((c=getchar()) != '\n');
-	gClear();
+	*/
+	//gClear();
 	restartKernel();
 }
 

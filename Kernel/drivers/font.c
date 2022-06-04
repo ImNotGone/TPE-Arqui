@@ -58005,7 +58005,7 @@ const struct bitmap_font font = {
 };
 
 // font width is always 8
-uint8_t * getcharFont(uint8_t c) {
+const uint8_t * getcharFont(uint8_t c) {
 	return font.Bitmap + (font.Height * (c - 31));
 }
 

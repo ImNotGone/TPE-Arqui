@@ -14,7 +14,7 @@ struct bitmap_font {
 	const uint8_t	*Bitmap;	///< bitmap of all characters
 };
 
-uint8_t * getcharFont(uint8_t c);
+const uint8_t * getcharFont(uint8_t c);
 uint8_t getFontHeight();
 uint8_t getFontWidth();
 
