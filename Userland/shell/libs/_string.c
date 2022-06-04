@@ -94,7 +94,6 @@ int64_t strtol(const char *str, const char **endptr, int base) {
 }
 
 void trim(char *str) {
-    uint64_t len = strlen(str);
     uint64_t i, j, k;
     for (i = 0; str[i] == ' '; i++);
 

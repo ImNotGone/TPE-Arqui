@@ -10,6 +10,9 @@
 #include <primes.h>
 #include <fibonacci.h>
 
+extern void zerodiv();
+extern void invalidopcode();
+
 #define COMMAND_BUFFER_SIZE 256
 #define LEFT_SCREEN 0
 #define FULL_SCREEN 0

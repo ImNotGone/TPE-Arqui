@@ -170,7 +170,6 @@ int main()
 	gcolor C2 = {156, 39, 6};
 	gcolor C3 = {212, 91, 18};
 	gcolor C4 = {243, 188, 46};
-	gcolor WHITE = {0xFF, 0xFF, 0xFF};
 	gcolor BLACK = {0x00, 00, 00};
 	gPrintColor("      /\\/\\/\\/\\/\\    ", BLACK, C1);
 	gPrintColor("/\\/\\    /\\/\\  ", BLACK, C2);

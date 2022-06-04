@@ -13,12 +13,12 @@ static fiboInternalState fiboInternalStates[] = {{0, 0, 1, 1}, {0, 0, 1, 1}};
 
 void fiboNext(int screen) {
     if (fiboInternalStates[screen].i == 0) {
-        printf("fibo(%d) = %d\n", 0, 0);
+        printf("fibonacci(%d) = %d\n", 0, 0);
         fiboInternalStates[screen].i++;
         return;
     }
 
-    printf("fibo(%d) = %d\n", fiboInternalStates[screen].i, fiboInternalStates[screen].current);
+    printf("fibonacci(%d) = %d\n", fiboInternalStates[screen].i, fiboInternalStates[screen].current);
     fiboInternalStates[screen].i++;
     fiboInternalStates[screen].prev = fiboInternalStates[screen].current;
     fiboInternalStates[screen].current = fiboInternalStates[screen].next;

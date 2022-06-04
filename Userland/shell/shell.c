@@ -15,130 +15,89 @@ typedef struct command {
     iterator it;
 } command;
 
+// -------- main functions -------------------------------------
 static void init();
 static void command_listener();
+
+// ------------ commands implemented on this file -----------------------
 static void help();
-static void inforeg();
-extern void zerodiv();
-extern void invalidopcode();
 static void primes();
-static void fibo();
-static void screenDiv(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress);
-static void waitForEnter();
+static void fibonacci();
+static void screenDiv(command leftCommand, command rightCommand);
+
+//----- auxiliary functions ------------
+
+static void handlePipe(command leftCommand, command rightCommand);
+static void pipeError(int64_t add, const char * side, const char * command);
 static void checkExited();
 static void resetPaused();
 static void resetRunning();
+static void resetStarted();
+static void resetPrintmemAddresses();
+static void waitForEnterOrS();
 static int64_t parsePrintmem(char * commandBuffer);
 
-// para que no esten en bss B-)
+// -------------- Flags -- no inicializadas en 0 para que no esten en bss B-)
 static int running[] = {NO_PROGRAM_RUNNING, NO_PROGRAM_RUNNING};
-static bool stoped = TRUE;
+static bool stopped = TRUE;
 static bool paused[] = {TRUE, TRUE};
-static bool leftExep = TRUE, rightExep = TRUE;
-static bool commingFromExeption = TRUE;
-static bool nonIterable[] = {TRUE, TRUE};
+static bool leftExcep = TRUE, rightExcep = TRUE;
+static bool comingFromException = TRUE;
+static bool started[] = {TRUE, TRUE};
+static int64_t printmemAddresses[] = {INVALID_ADDRESS, INVALID_ADDRESS};
 
 // nonIterableCommands functions
 // only does 1 repetition
 static bool nonIterableCommandHasNext(int screen) {
-    bool out = nonIterable[screen];
-    nonIterable[screen] = FALSE;
-    return out;
+    return (bool) !started[screen];
 }
 
 static void nonIterableCommandReset(int screen) {
-    nonIterable[screen] = TRUE;
+    started[screen] = FALSE;
 }
 
 static command commands[] = {
-        {"help", "shows all available commands", help,                                          {nonIterableCommandHasNext, help, nonIterableCommandReset}},
-        {"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", inforeg,   {nonIterableCommandHasNext, inforeg, nonIterableCommandReset}},
-        {"zerodiv", "generates a zero divition exeption", zerodiv,                              {nonIterableCommandHasNext, zerodiv, nonIterableCommandReset}},
-        {"invalid_opcode", "generates an invalid operation exception", invalidopcode,           {nonIterableCommandHasNext, invalidopcode, nonIterableCommandReset}},
-        {"time", "prints the current system time", printTime,                                   {nonIterableCommandHasNext, printTime, nonIterableCommandReset}},
-        {"primes", "prints primes", primes,                                                     {primesHasNext, (void (*) (int64_t))primesNext, primesReset}},
-        {"fibo", "prints the fibonacci series",fibo,                                            {fiboHasNext, (void (*) (int64_t))fiboNext, fiboReset}},
-        {"printmem", "prints the 32 bytes which follow the recieved address", (fp) memDump,     {nonIterableCommandHasNext, (void (*) (int64_t)) memDump, nonIterableCommandReset}},
-        {"|", "allows to divide the screen and run 2 programms", (fp) screenDiv,                {nonIterableCommandHasNext, (void (*) (int64_t)) screenDiv, nonIterableCommandReset}}
+        {"help", "shows all available commands",                                     help,           {nonIterableCommandHasNext, help,                           nonIterableCommandReset}},
+        {"inforeg", "prints register snapshot, take a snapshot using \'cntrl + s\'", regDump,        {nonIterableCommandHasNext, regDump,                        nonIterableCommandReset}},
+        {"zerodiv", "generates a zero divition exeption",                            zerodiv,        {nonIterableCommandHasNext, zerodiv,                        nonIterableCommandReset}},
+        {"invalid_opcode", "generates an invalid operation exception",               invalidopcode,  {nonIterableCommandHasNext, invalidopcode,                  nonIterableCommandReset}},
+        {"time", "prints the current system time",                                   printTime,      {nonIterableCommandHasNext, printTime,                      nonIterableCommandReset}},
+        {"primes", "prints primes",                                                  primes,         {primesHasNext,             (void (*) (int64_t))primesNext, primesReset}},
+        {"fibonacci", "prints the fibonacci series",                                 fibonacci,      {fiboHasNext,               (void (*) (int64_t))fiboNext,   fiboReset}},
+        {"printmem", "prints the 32 bytes which follow the recieved address",        (fp) memDump,   {nonIterableCommandHasNext, (void (*) (int64_t)) memDump,   nonIterableCommandReset}},
+        {"|", "allows to divide the screen and run 2 programms",                     (fp) screenDiv, {nonIterableCommandHasNext, (void (*) (int64_t)) screenDiv, nonIterableCommandReset}}
 };
 
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
 
+//--------------------- Main functions ----------------
+
 int main() {
     if(running[LEFT_SCREEN] >= 0 && running[RIGHT_SCREEN] >= 0) {
-        screenDiv(commands[running[LEFT_SCREEN]], commands[running[RIGHT_SCREEN]], -1, -1);
+        screenDiv(commands[running[LEFT_SCREEN]], commands[running[RIGHT_SCREEN]]);
     } else if(running[FULL_SCREEN] == NO_PROGRAM_RUNNING) {
         init();
     }
-    /*
-    if (running[LEFT_SCREEN] >= 0 && running[RIGHT_SCREEN] >= 0) {
-        puts("Se ha reiniciado el kernel mientras se corrian programas");
-        printf("En la ventana izquierda se estaba corriendo: %s\nEn la ventana derecha se estaba corriendo: %s\n", commands[running[LEFT_SCREEN]].name, commands[running[RIGHT_SCREEN]].name);
-        char c;
-        do {
-            printf("Si desea reaunudar %s presione 0\nSi desea reaunudar %s presione 1\nSi desea reaunudar ambos programas presione 2\nSi desea volver a la terminal presione 3\n", commands[running[LEFT_SCREEN]].name, commands[running[RIGHT_SCREEN]].name);
-        } while ((c = getchar()) < '0' || c > '3');
 
-        switch (c) {
-            case '0':
-                commands[running[RIGHT_SCREEN]].it.reset(RIGHT_SCREEN); running[RIGHT_SCREEN] = NO_PROGRAM_RUNNING; commands[running[LEFT_SCREEN]].exec(); waitForEnter();break;
-            case '1':
-                commands[running[LEFT_SCREEN]].it.reset(LEFT_SCREEN); running[LEFT_SCREEN] = NO_PROGRAM_RUNNING; commands[running[RIGHT_SCREEN]].exec(); waitForEnter();break;
-            case '2':
-                screenDiv(commands[running[LEFT_SCREEN]], commands[running[RIGHT_SCREEN]], -1, -1); break;
-            default:
-                break;
-        }
-
-        if (running[LEFT_SCREEN] >= 0)
-            commands[running[LEFT_SCREEN]].it.reset(LEFT_SCREEN);
-        if (running[RIGHT_SCREEN]>= 0)
-            commands[running[RIGHT_SCREEN]].it.reset(RIGHT_SCREEN);
-
-    } else if (running[LEFT_SCREEN] >= 0 || running[RIGHT_SCREEN] >= 0) {
-        int runningScreen = running[LEFT_SCREEN] >= 0 ? LEFT_SCREEN : RIGHT_SCREEN;
-        printf("Se ha reiniciado el kernel mientras se corria %s\n", commands[running[runningScreen]].name);
-        char c;
-        do {
-            puts("Si desea reaunudar el programa presione 0\nSi desea volver a la terminal presione 1");
-        } while ((c = getchar()) < '0' || c > '1');
-
-        if (c == '0')
-            commands[running[runningScreen]].exec();
-
-        commands[running[runningScreen]].it.reset(runningScreen);
-    }
-    */
     while(TRUE) {
         putchar('>');
         command_listener();
     }
 }
 
-
 static void init() {
-    stoped = FALSE;
-    paused[0] = FALSE;
-    paused[1] = FALSE;
-    leftExep = FALSE;
-    rightExep = FALSE;
-    commingFromExeption = FALSE;
+    stopped = FALSE;
+    started[LEFT_SCREEN] = FALSE;
+    started[RIGHT_SCREEN] = FALSE;
+    leftExcep = FALSE;
+    rightExcep = FALSE;
+    comingFromException = FALSE;
     sysOneWind();
     resetRunning();
     resetPaused();
+    resetStarted();
     puts("Bienvenido a la consola");
     help();
-}
-
-static void pipeError(int add, const char * side, const char * command) {
-    switch(add) {
-        case ARGUMENT_MISSING:
-            printf("printmem de la %s debe recibir la direccion como argumento\n", side); break;
-        case INVALID_ADDRESS:
-            printf("Argumento del printmem de la %s invalido\n", side); break;
-        case NOT_PRINTMEM:
-            printf("%s -> comando invalido\n", command); break;
-    }
 }
 
 static void command_listener() {
@@ -186,7 +145,9 @@ static void command_listener() {
 
         if (address >= 0) {
             running[FULL_SCREEN] = 7;
-            memDump(address);
+            printmemAddresses[FULL_SCREEN] = address;
+            memDump(printmemAddresses[FULL_SCREEN]);
+            printmemAddresses[FULL_SCREEN] = address;
             running[FULL_SCREEN] = NO_PROGRAM_RUNNING;
         }
 
@@ -210,13 +171,14 @@ static void command_listener() {
         }
     }
 
-    int64_t leftAddress = -1, rightAddress = -1;
+    int64_t leftAddress, rightAddress;
 
     if (!leftFound) {
         leftAddress = parsePrintmem(leftStr);
         if (leftAddress >= 0) {
             leftCommand = commands[7];
             leftFound = TRUE;
+            printmemAddresses[LEFT_SCREEN] = leftAddress;
             running[LEFT_SCREEN] = 7;
         }
     }
@@ -226,15 +188,17 @@ static void command_listener() {
         if (rightAddress >= 0) {
             rightCommand = commands[7];
             rightFound = TRUE;
+            printmemAddresses[RIGHT_SCREEN] = rightAddress;
             running[RIGHT_SCREEN] = 7;
         }
     }
 
     if (leftFound && rightFound) {
-        screenDiv(leftCommand, rightCommand, leftAddress, rightAddress);
+        screenDiv(leftCommand, rightCommand);
         return;
     }
     resetRunning();
+    resetPrintmemAddresses();
     if (!leftFound)
         pipeError(leftAddress, "izquierda", leftStr);
 
@@ -243,38 +207,56 @@ static void command_listener() {
 }
 
 
-
+//------------------- commands implemented in this file ---------------
 static void help() {
     puts("Los comandos disponibles son:");
     for(int i = 0; i < commandsDim; i++) {
-        printf("%d) %s => %s\n", i, commands[i].name, commands[i].desc);
+        printf("%d) %s => %s\n", i + 1, commands[i].name, commands[i].desc);
     }
-}
-static void inforeg() {
-    regDump();
 }
 
 static void primes() {
-    while (!stoped && primesHasNext(FULL_SCREEN)) {
+    while (!stopped && primesHasNext(FULL_SCREEN)) {
         if(!paused[FULL_SCREEN])
             primesNext(FULL_SCREEN);
         checkExited();
     }
     primesReset(FULL_SCREEN);
     resetPaused();
-    stoped = FALSE;
+    stopped = FALSE;
 }
-static void fibo() {
 
-    while (!stoped && fiboHasNext(FULL_SCREEN)) {
-        if(!paused[FULL_SCREEN])
+static void fibonacci() {
+    while (!stopped && fiboHasNext(FULL_SCREEN)) {
+        if (!paused[FULL_SCREEN])
             fiboNext(FULL_SCREEN);
         checkExited();
     }
     fiboReset(FULL_SCREEN);
     resetPaused();
-    stoped = FALSE;
+    stopped = FALSE;
 }
+
+static void screenDiv(command leftCommand, command rightCommand) {
+    if(comingFromException == FALSE) {
+        sysDivWind();
+        leftExcep = FALSE;
+        rightExcep = FALSE;
+    }
+    handlePipe(leftCommand, rightCommand);
+    if(stopped) {
+        stopped = FALSE;
+        sysOneWind();
+        return;
+    }
+    sysSetWind(LEFT_SCREEN);
+    printf("\nBoth commands have finished\n");
+    printf("Press enter or s to return to console\n");
+    waitForEnterOrS();
+    sysOneWind();
+}
+
+//----------------- Auxiliary functions -------------------------------------------
 
 static int64_t parsePrintmem(char * commandBuffer) {
     if (strcmp(commandBuffer, "printmem") == 0)
@@ -302,10 +284,52 @@ static int64_t parsePrintmem(char * commandBuffer) {
     return address;
 }
 
+static void handlePipe(command leftCommand, command rightCommand) {
+    comingFromException = TRUE;
+    while (!stopped && (leftCommand.it.hasNext(LEFT_SCREEN) || rightCommand.it.hasNext(RIGHT_SCREEN))) {
+        checkExited();
+
+        if (!leftExcep && !paused[LEFT_SCREEN] && leftCommand.it.hasNext(LEFT_SCREEN)) {
+            sysSetWind(LEFT_SCREEN);
+            leftExcep = TRUE;
+            started[LEFT_SCREEN] = TRUE;
+            leftCommand.it.next(printmemAddresses[LEFT_SCREEN] >= 0 ? printmemAddresses[LEFT_SCREEN] : LEFT_SCREEN);
+            leftExcep = FALSE;
+        }
+
+        if (!rightExcep && !paused[RIGHT_SCREEN] && rightCommand.it.hasNext(RIGHT_SCREEN)) {
+            sysSetWind(RIGHT_SCREEN);
+            rightExcep = TRUE;
+            started[RIGHT_SCREEN] = TRUE;
+            rightCommand.it.next(printmemAddresses[RIGHT_SCREEN] >= 0 ? printmemAddresses[RIGHT_SCREEN] : RIGHT_SCREEN);
+            rightExcep = FALSE;
+        }
+    }
+    leftCommand.it.reset(LEFT_SCREEN);
+    rightCommand.it.reset(RIGHT_SCREEN);
+    resetPaused();
+    resetRunning();
+    resetStarted();
+    resetPrintmemAddresses();
+    comingFromException = FALSE;
+}
+
+static void pipeError(int64_t add, const char * side, const char * command) {
+    switch(add) {
+        case ARGUMENT_MISSING:
+            printf("printmem de la %s debe recibir la direccion como argumento\n", side); break;
+        case INVALID_ADDRESS:
+            printf("Argumento del printmem de la %s invalido\n", side); break;
+        case NOT_PRINTMEM:
+            printf("%s -> comando invalido\n", command); break;
+        default:
+            return;
+    }
+}
+
 static void waitForEnterOrS() {
     char c;
     while ((c = getchar()) != '\n' && c != 's');
-    return;
 }
 
 static void updateStatus(int screen) {
@@ -317,9 +341,9 @@ static void checkExited() {
     char c;
     if(sysread(STDIN, &c, 1) == 0) return;
     switch (c) { 
-        case 's': stoped = 1; puts("== STOPED =="); break;
-        case 'a': paused[LEFT_SCREEN] = !paused[LEFT_SCREEN]; updateStatus(LEFT_SCREEN); break;
-        case 'd': paused[RIGHT_SCREEN] = !paused[RIGHT_SCREEN]; updateStatus(RIGHT_SCREEN); break;
+        case 's': stopped = 1; puts("== STOPED =="); break;
+        case 'a': paused[LEFT_SCREEN] = (bool) !paused[LEFT_SCREEN]; updateStatus(LEFT_SCREEN); break;
+        case 'd': paused[RIGHT_SCREEN] = (bool) !paused[RIGHT_SCREEN]; updateStatus(RIGHT_SCREEN); break;
         default: break;
     }
 }
@@ -334,49 +358,12 @@ static void resetRunning() {
     running[RIGHT_SCREEN] = NO_PROGRAM_RUNNING;
 }
 
-static void handlePipe(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress) {
-    commingFromExeption = TRUE;
-    bool remainsLeft = !leftExep;
-    bool remainsRight = !rightExep;
-    while (!stoped && (remainsLeft || remainsRight)) {
-        checkExited();
-
-        if (!leftExep && !paused[LEFT_SCREEN] && (remainsLeft = leftCommand.it.hasNext(LEFT_SCREEN))) {
-            sysSetWind(LEFT_SCREEN);
-            leftExep = TRUE;
-            leftCommand.it.next((leftAddress) >= 0 ? leftAddress : LEFT_SCREEN);
-            leftExep = FALSE;
-        }
-
-        if (!rightExep && !paused[RIGHT_SCREEN] && (remainsRight = rightCommand.it.hasNext(RIGHT_SCREEN))) {
-            sysSetWind(RIGHT_SCREEN);
-            rightExep = TRUE;
-            rightCommand.it.next((rightAddress) >= 0 ? rightAddress : RIGHT_SCREEN);
-            rightExep = FALSE;
-        }
-    }
-    leftCommand.it.reset(LEFT_SCREEN);
-    rightCommand.it.reset(RIGHT_SCREEN);
-    resetPaused();
-    resetRunning();
-    commingFromExeption = FALSE;
+static void resetStarted() {
+    started[LEFT_SCREEN] = FALSE;
+    started[RIGHT_SCREEN] = FALSE;
 }
 
-static void screenDiv(command leftCommand, command rightCommand, int64_t leftAddress, int64_t rightAddress) {
-    if(commingFromExeption == FALSE) {
-        sysDivWind();
-        leftExep = FALSE;
-        rightExep = FALSE;
-    }
-    handlePipe(leftCommand, rightCommand, leftAddress, rightAddress);
-    if(stoped) {
-        stoped = FALSE;
-        sysOneWind();
-        return;
-    }
-    sysSetWind(LEFT_SCREEN);
-    printf("\nBoth commands have finished\n");
-    printf("Press enter or s to return to console\n");
-    waitForEnterOrS();
-    sysOneWind();
+static void resetPrintmemAddresses() {
+    printmemAddresses[LEFT_SCREEN] = INVALID_ADDRESS;
+    printmemAddresses[RIGHT_SCREEN] = INVALID_ADDRESS;
 }

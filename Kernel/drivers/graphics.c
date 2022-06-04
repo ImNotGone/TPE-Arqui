@@ -20,7 +20,7 @@ static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base);
 #define COLORCHANELLS 3
 
 static uint8_t * getPixel(int x, int y) {
-    return (uint8_t *) (graphicsInfo->framebuffer+3*(graphicsInfo->width*y+x));
+    return (graphicsInfo->framebuffer+3*(graphicsInfo->width*y+x));
 }
 
 static void drawPixel(int x, int y, gcolor color){

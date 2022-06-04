@@ -1,4 +1,4 @@
-#ifndef _STDBOOl_H
+#ifndef _STDBOOL_H
 #define _STDBOOL_H
 
 typedef char bool;
