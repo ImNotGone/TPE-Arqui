@@ -110,8 +110,10 @@ int64_t scanf(const char * fmt, ...){
             switch (fmt[i]) {
                 case 's': {
                     char * aux = (char *) va_arg( vl, char * );
-                    for (int k = 0; buff[k] != '\0' && k < buffLen; k++)
+                    int k;
+                    for (k = 0; buff[k] != '\0' && k < buffLen; k++)
                         aux[k] = buff[j++];
+                    aux[k] = '\0';
                     break;
                 }
                 case 'c': {

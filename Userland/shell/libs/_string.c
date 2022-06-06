@@ -87,6 +87,9 @@ int64_t strtol(const char *str, const char **endptr, int base) {
     if (!IS_DIGIT(str[i - 1]) && !IS_ALPHA(str[i - 1]))
         i = 0;
 
+    if (finished)
+        i--;
+
     if (endptr)
         *endptr = &str[i];
 

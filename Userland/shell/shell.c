@@ -59,6 +59,10 @@ static int64_t printmemAddresses[] = {INVALID_ADDRESS, INVALID_ADDRESS};
 // selector for next, in case of printmem command
 #define ADDR_OR_SCREEN(screen) (printmemAddresses[(screen)] >= 0 ? printmemAddresses[(screen)] : (screen))
 
+// To expand defined value to a string
+#define VALUE_TO_STRING(s) LITERAL_TO_STRING(s)
+#define LITERAL_TO_STRING(s) #s
+
 // Pipe / iterable command auxiliary keys
 #define CMD_STOP_KEY 's'
 #define LEFTCMD_PAUSE_KEY 'a'
@@ -120,22 +124,8 @@ static void init() {
 
 static void command_listener() {
     char commandBuffer[COMMAND_BUFFER_SIZE];
-    int c;
-    int i = 0;
-    while((c = getchar()) != '\n' && i < COMMAND_BUFFER_SIZE) {
-        if(c == '\b') {
-            if(i > 0) {
-                putchar(c);
-                i--;
-            }
-        }
-        if(c != '\b') {
-            putchar(c);
-            commandBuffer[i++] = c;
-        }
-    }
-    commandBuffer[i] = 0;
-    putchar('\n');
+    int i;
+    scanf("%"VALUE_TO_STRING(COMMAND_BUFFER_SIZE)"s", commandBuffer); // maybe usar una funcion?
     if(strcmp(commandBuffer, "") == 0) return;
     for (i = 0; i < commandsDim - 2; i++) {
         if (strcmp(commandBuffer, commands[i].name) == 0) {
@@ -295,7 +285,7 @@ static int64_t parsePrintmem(char * commandBuffer) {
     const char * out;
     int64_t address = strtol(argument, &out, 16);
 
-    if (address < 0 || *out !='\0')
+    if (address < 0 || *out != '\0')
         return INVALID_ADDRESS;
 
     return address;
