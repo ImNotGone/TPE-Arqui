@@ -20,6 +20,11 @@
 #define NOT_PRINTMEM -2
 #define INVALID_ADDRESS -3
 
+#define WELCOME_MESSAGE "Welcome to the console"
+#define ARGUMENT_MISSING_MESSAGE "printmem should receive the address as an argument"
+#define INVALID_ARGUMENT_MESSAGE "Invalid argument"
+#define INVALID_COMMAND_MESSAGE_FORMAT "%s -> invalid command\n"
+
 extern void zerodiv();
 extern void invalidopcode();
 
