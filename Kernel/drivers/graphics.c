@@ -17,7 +17,8 @@ static gcolor DEFAULT_FOREGROUND = {0xFF,0xFF,0xFF};
 
 static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base);
 
-#define COLORCHANELLS 3
+#define COLORCHANELLS   3
+#define CHAR_CURSOR     '_'
 
 static uint8_t * getPixel(int x, int y) {
     return (uint8_t *) (graphicsInfo->framebuffer+3*(graphicsInfo->width*y+x));
@@ -65,7 +66,7 @@ static void scrollUp(){
 
 static void gSetCursor(gcolor color) {
     if(!cursorActive) return;
-    gPutcharColor('_', windows[currentWindow].background, color);
+    gPutcharColor(CHAR_CURSOR, windows[currentWindow].background, color);
     if(windows[currentWindow].cx == 0){
         // subo una fila
         windows[currentWindow].cy -= 1;
@@ -152,8 +153,7 @@ int8_t divideWindows() {
     // gClear() o gUpdateBackground();
     currentWindow = 0;
     // linea de division
-    int x = graphicsInfo->width + fontWidth;
-    x /= 2;
+    int x = (graphicsInfo->width + fontWidth)/2;
     for(int y = 0; y < graphicsInfo->height; y++) {
         drawPixel(x, y, DEFAULT_FOREGROUND);            
     }
