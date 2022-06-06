@@ -11,7 +11,7 @@ typedef struct fiboInternalState {
 
 static fiboInternalState fiboInternalStates[] = {{0, 0, 1, 1}, {0, 0, 1, 1}};
 
-void fiboNext(int screen) {
+void fiboNext(int64_t screen) {
     if (fiboInternalStates[screen].i == 0) {
         printf("fibonacci(%d) = %d\n", 0, 0);
         fiboInternalStates[screen].i++;
@@ -25,11 +25,11 @@ void fiboNext(int screen) {
     fiboInternalStates[screen].next = fiboInternalStates[screen].prev + fiboInternalStates[screen].current;
 }
 
-bool fiboHasNext(int screen) {
+bool fiboHasNext(int64_t screen) {
     return fiboInternalStates[screen].current <= UINT64_MAX - fiboInternalStates[screen].prev;
 }
 
-void fiboReset(int screen) {
+void fiboReset(int64_t screen) {
     fiboInternalStates[screen].i = 0;
     fiboInternalStates[screen].prev = 0;
     fiboInternalStates[screen].current = 1;

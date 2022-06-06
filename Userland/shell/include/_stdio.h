@@ -10,10 +10,11 @@
 #define STDOUT  1
 #define STDERR  2
 
+int64_t fprintf(uint64_t fd, const char * fmt, ...);
 int64_t printf(const char * fmt, ...);
 int64_t scanf(const char * fmt, ...);
+int64_t puts(const char * str);
 int64_t putchar(int64_t c);
 int64_t getchar();
-int64_t puts(const char * str);
 
 #endif//_STDIO_H

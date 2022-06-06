@@ -3,7 +3,7 @@
 #define IS_ALPHA(c) ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
 #define IS_DIGIT(c) (c <= '9' && c >= '0')
 #define TO_UPPER(c) (c - ((c >= 'a' && c <= 'z') ? 'a'-'A' : 0))
-#define IS_VALID(c, base) ((base <= 10 && (c >= '0' && c < '0' + (base <= 10 ? base : 10))) || (base > 10 && (IS_DIGIT(c) || ((c >= 'a' && c < 'a' + (base - 10)) || (c >= 'A' && c < 'A' + (base - 10))))))
+#define VALID_NUM_FOR_BASE(c, base) ((base <= 10 && (c >= '0' && c < '0' + (base <= 10 ? base : 10))) || (base > 10 && (IS_DIGIT(c) || ((c >= 'a' && c < 'a' + (base - 10)) || (c >= 'A' && c < 'A' + (base - 10))))))
 
 
 uint64_t strlen(const char * str) {
@@ -35,7 +35,7 @@ int64_t strcmp(const char * str1, const char * str2) {
 // https://stackoverflow.com/questions/17251272/implementation-of-strtol-function-cast
 int64_t strtol(const char *str, const char **endptr, int base) {
 
-    if ((base < 2 || base > 36) || str[0] == '\0' || !IS_VALID(str[0], base))
+    if ((base < 2 || base > 36) || str[0] == '\0' || !VALID_NUM_FOR_BASE(str[0], base))
         return -1;
 
 
@@ -74,7 +74,7 @@ int64_t strtol(const char *str, const char **endptr, int base) {
 
     for (; str[i] != '\0' && !finished; i++) {
         digit = -1;
-        if (IS_VALID(str[i], base))
+        if (VALID_NUM_FOR_BASE(str[i], base))
             digit = TO_UPPER(str[i]) - (IS_DIGIT(str[i]) ? '0' : 55);
 
         if (digit < base && digit != -1)

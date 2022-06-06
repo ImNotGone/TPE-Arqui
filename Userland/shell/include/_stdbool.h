@@ -3,6 +3,6 @@
 
 typedef char bool;
 #define FALSE 0
-#define TRUE 1
+#define TRUE !FALSE
 
 #endif//_STDBOOL_H

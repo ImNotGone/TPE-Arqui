@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <_stdbool.h>
 
-void fiboNext(int screen);
-bool fiboHasNext(int screen);
-void fiboReset(int screen);
+void fiboNext(int64_t screen);
+bool fiboHasNext(int64_t screen);
+void fiboReset(int64_t screen);
 
 #endif//_FIBONACCI_H

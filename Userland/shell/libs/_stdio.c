@@ -30,7 +30,7 @@ static int64_t fputchar(uint64_t fd, int64_t c) {
     return c;
 }
 
-int64_t vfprintf(uint64_t fd, const char * fmt, va_list args) {
+static int64_t vfprintf(uint64_t fd, const char * fmt, va_list args) {
     int64_t bytesWritten = 0;
     for(int64_t i = 0; fmt[i] != '\0'; i++) {
         if(fmt[i] != '%') fputchar(fd, fmt[i]);
