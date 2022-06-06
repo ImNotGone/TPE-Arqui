@@ -21,7 +21,7 @@ static uint32_t uintToBase(uint64_t value, char * buff, uint32_t base);
 #define CHAR_CURSOR     '_'
 
 static uint8_t * getPixel(int x, int y) {
-    return (uint8_t *) (graphicsInfo->framebuffer+3*(graphicsInfo->width*y+x));
+    return (graphicsInfo->framebuffer+3*(graphicsInfo->width*y+x));
 }
 
 static void drawPixel(int x, int y, gcolor color){
@@ -178,7 +178,7 @@ void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
     if(windows[currentWindow].cy == windows[currentWindow].height)
         scrollUp();
     
-    uint8_t * bitmap = getcharFont(c);
+    const uint8_t * bitmap = getcharFont(c);
     // current bit y
     uint16_t cby = (windows[currentWindow].sy + windows[currentWindow].cy)*fontHeight;
     // current bit x

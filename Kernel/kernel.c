@@ -22,9 +22,8 @@ static void *const shellAddress = (void *)0x400000;
 
 typedef int (*EntryPoint)();
 
-extern void testWrite();
-extern void testRead();
 extern void _hlt();
+
 void clearBSS(void *bssAddress, uint64_t bssSize)
 {
 	memset(bssAddress, 0, bssSize);
@@ -80,6 +79,8 @@ void *initializeKernelBinary()
 	// gPrint("[Done]");
 	// gNewline();
 	// gNewline();
+	load_idt();
+	initGraphics();
 	return getStackBase();
 }
 
@@ -90,8 +91,6 @@ int init_shell()
 
 int main()
 {
-	load_idt();
-	initGraphics();
 	// gPrint("[Kernel Main]");
 	// gNewline();
 	// gPrint("  Sample code module at 0x");
@@ -171,7 +170,6 @@ int main()
 	gcolor C2 = {156, 39, 6};
 	gcolor C3 = {212, 91, 18};
 	gcolor C4 = {243, 188, 46};
-	gcolor WHITE = {0xFF, 0xFF, 0xFF};
 	gcolor BLACK = {0x00, 00, 00};
 	gPrintColor("      /\\/\\/\\/\\/\\    ", BLACK, C1);
 	gPrintColor("/\\/\\    /\\/\\  ", BLACK, C2);

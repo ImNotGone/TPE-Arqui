@@ -1,6 +1,6 @@
 #include <dumps.h>
 
-void memDump(uint64_t address) {
+void memDump(int64_t address) {
     int8_t memData[MEM_DUMP_COUNT];
     sysmemdump(address, memData);
     printf("Imprimiendo %d bytes desde la posicion %x :\n", MEM_DUMP_COUNT, address);
