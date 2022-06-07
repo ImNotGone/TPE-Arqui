@@ -288,7 +288,7 @@ static int64_t parsePrintmem(char * commandBuffer) {
     const char * out;
     int64_t address = strtol(argument, &out, 16);
 
-    if (address < 0 || *out != '\0')
+    if (address < 0 || (*out != '\0' && (*out != 'h')) || out[1] != '\0')
         return INVALID_ADDRESS;
 
     return address;
