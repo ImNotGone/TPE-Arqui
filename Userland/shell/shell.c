@@ -212,7 +212,7 @@ static void help() {
     puts("\n====================\n");
     puts("The available commands are:\n");
     for(int i = 0; i < commandsDim; i++) {
-        printf("%d) %s => %s\n", i + 1, commands[i].name, commands[i].desc);
+        printf("%d) %s:\n%s\n\n", i + 1, commands[i].name, commands[i].desc);
     }
 }
 

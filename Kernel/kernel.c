@@ -144,6 +144,6 @@ static void printLogo() {
 
 		}
 	}
-	gPrint("\n");
+	gNewline();
 	return;
 }

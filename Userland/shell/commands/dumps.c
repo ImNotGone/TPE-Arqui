@@ -4,20 +4,23 @@ void memDump(uint64_t address) {
     int8_t memData[MEM_DUMP_COUNT];
     int64_t accessed = sysmemdump(address, memData);
     if (accessed < 0) {
-        fputs(STDERR, "Cant access any memory from the address received");
+        fputs(STDERR, MEM_DUMP_ERR);
         return;
     }
 
     printf("Printing %d bytes from address %x :\n", accessed, address);
     for (int i = 0; i < accessed; i++)
         printf("%x: %x\n", address + i, 0xFF & memData[i]);
+    if(accessed < MEM_DUMP_COUNT) {
+        fprintf(STDERR, MAX_MEM_NOTICE);
+    }
 }
 
 void regDump() {
     TRegs regs;
     int8_t regSaved = sysregdump(&regs); //sysregdump retorna 0 si no habia un snapshot
     if(!regSaved) {
-        puts("No register snapshot found, press 'ctrl + s' to save a snapshot");
+        puts(REG_DUMP_ERR);
         return;
     }
 
