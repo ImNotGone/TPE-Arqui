@@ -57,24 +57,6 @@ TSyscallHandler syscallHandlers[] = {
 static uint64_t syscallHandlersDim = sizeof(syscallHandlers) / sizeof(syscallHandlers[0]);
 
 int64_t syscallDispatcher(uint64_t rax, uint64_t rdi, uint64_t rsi, uint64_t rdx, uint64_t r10, uint64_t r8) {
-    //ncPrint("rax: ");
-    //ncPrintHex(rax);
-    //ncNewline();ß
-    //ncPrint("rdi: ");
-    //ncPrintHex(rdi);
-    //ncNewline();
-    //ncPrint("rsi: ");
-    //ncPrintHex(rsi);
-    //ncNewline();
-    //ncPrint("rdx: ");
-    //ncPrintHex(rdx);
-    //ncNewline();
-    //ncPrint("r10: ");
-    //ncPrintHex(r10);
-    //ncNewline();
-    //ncPrint("r8 : ");
-    //ncPrintHex(r8);
-    //ncNewline();
     if(rax >= syscallHandlersDim)
         return -1;
     
@@ -94,14 +76,6 @@ int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes) {
 }
 
 int64_t sysread(uint64_t fd, char * buffer, int64_t bytes) {
-    //ncPrint("fd: ");
-    //ncPrintHex(fd);
-    //ncNewline();
-    //ncPrint("buffer: ");
-    //ncPrintHex(buffer);
-    //ncNewline();
-    //ncPrint("bytes: ");
-    //ncPrintHex(bytes);
     if(fd != STDIN) return -1;
     int64_t i = 0;
     char c;

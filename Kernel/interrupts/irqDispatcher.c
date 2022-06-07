@@ -25,22 +25,17 @@ void irqDispatcher(uint64_t irq) {
 	return;
 }
 
+// rutina para manejar la interrupcion del timer
 static void int_20() {
+	// aumento la cantidad de tiks (1 cada 55ms)
 	timer_handler();
-	// cada medio segundo actualizo el cursor
+	// aproximadamente cada medio segundo actualizo el cursor
 	if(ticks_elapsed() % 9 == 0) {
 		gCursorBlink();
 	}
-	/*
-	static long secondsElapsed = 0;
-	if(ticks_elapsed() % 90 == 0) {
-		ncPrint("segundos: ");
-		ncPrintDec(ticks_elapsed()/18);
-		ncNewline();
-	}
-	*/
 }
 
+// rutina para manejar la interrupcion del teclado
 static void int_21() {
 	keyboard_handler();
 }
