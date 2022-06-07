@@ -3,20 +3,20 @@
 void memDump(int64_t address) {
     int8_t memData[MEM_DUMP_COUNT];
     sysmemdump(address, memData);
-    printf("Imprimiendo %d bytes desde la posicion %x :\n", MEM_DUMP_COUNT, address);
+    printf("Printing %d bytes from address %x :\n", MEM_DUMP_COUNT, address);
     for (int i = 0; i < MEM_DUMP_COUNT; i++)
         printf("%x: %x\n", address + i, 0xFF & memData[i]);
 }
 
 void regDump() {
     TRegs regs;
-    int8_t regSaved = sysregdump(&regs);
+    int8_t regSaved = sysregdump(&regs); //sysregdump retorna 0 si no habia un snapshot
     if(!regSaved) {
-        puts("No se ha encontrado un snapShot de los registros, presione 'ctrl + s' para realizar un snapShot");
+        puts("No register snapshot found, press 'ctrl + s' to save a snapshot");
         return;
     }
 
-    puts("SnapShot de los registros:");
+    puts("Register snapshot:");
     printf("RAX: %x\n", regs.rax);
     printf("RBX: %x\n", regs.rbx);
     printf("RCX: %x\n", regs.rcx);

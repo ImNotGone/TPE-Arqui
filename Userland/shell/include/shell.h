@@ -73,6 +73,7 @@ typedef struct command {
 
 typedef enum COMMANDS {NONE = -1, HELP, INFOREG, ZERODIV, INVALID_OPCODE, TIME, PRIMES, FIBONACCI, PRINTMEM, PIPE, CANT_COMMANDS} COMMANDS;
 
+// Assembly routines
 extern void zerodiv();
 extern void invalidopcode();
 

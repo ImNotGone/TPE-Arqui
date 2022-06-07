@@ -16,7 +16,7 @@ static void iterate(hasNextfp hasNext, nextfp next, resetfp reset);
 static void handlePipe(command leftCommand, command rightCommand);
 static void displayError(int64_t add, const char *command);
 static void updateStatus();
-static void printStatus();
+static void printStatus(int screen);
 static void resetPaused();
 static void resetRunning();
 static void resetStarted();
@@ -24,7 +24,8 @@ static void resetPrintmemAddresses();
 static void waitForEnterOrStop();
 static int64_t parsePrintmem(char * commandBuffer);
 
-// -------------- Flags -- no inicializadas en 0 para que no esten en bss B-)
+// -------------- Flags ------------------------------
+// Inicializadas con valor distinto de cero para que no esten en bss
 static COMMANDS running[] = {NONE, NONE};
 static bool stopped = TRUE;
 static bool paused[] = {TRUE, TRUE};
@@ -60,6 +61,7 @@ static int commandsDim = sizeof(commands)/sizeof(commands[0]);
 //--------------------- Main functions ----------------
 
 int main() {
+    // se hace este checkeo para poder continuar programas si hubo un restart
     if(running[LEFT_SCREEN] >= 0 && running[RIGHT_SCREEN] >= 0) {
         screenDiv(commands[running[LEFT_SCREEN]], commands[running[RIGHT_SCREEN]]);
     } else if(running[FULL_SCREEN] == NONE) {
@@ -73,6 +75,7 @@ int main() {
 }
 
 static void init() {
+    // Se actualizan todas las flags con sus valores correspondientes de inicio
     stopped = FALSE;
     started[LEFT_SCREEN] = FALSE;
     started[RIGHT_SCREEN] = FALSE;
@@ -83,6 +86,7 @@ static void init() {
     resetRunning();
     resetPaused();
     resetStarted();
+    // Le mostramos info al usuario
     puts(WELCOME_MESSAGE);
     help();
 }
@@ -90,8 +94,12 @@ static void init() {
 static void command_listener() {
     char commandBuffer[COMMAND_BUFFER_SIZE];
     int i;
-    scanf("%"VALUE_TO_STRING(COMMAND_BUFFER_SIZE)"s", commandBuffer); // maybe usar una funcion?
+    scanf("%"VALUE_TO_STRING(COMMAND_BUFFER_SIZE)"s", commandBuffer);
+
     if(strcmp(commandBuffer, "") == 0) return;
+
+    // Vemos si el comando matchea con alguno
+    // Que no requiere un parseo especial del input
     for (i = 0; i < commandsDim - 2; i++) {
         if (strcmp(commandBuffer, commands[i].name) == 0) {
             running[FULL_SCREEN] = i;
@@ -101,13 +109,17 @@ static void command_listener() {
         }
     }
 
-    char leftStr[COMMAND_BUFFER_SIZE];
-    char rightStr[COMMAND_BUFFER_SIZE];
+    // Vemos si comando es el pipe
 
-    if (!strDivide(commandBuffer, leftStr, rightStr, '|')) {
+    char leftStr[COMMAND_BUFFER_SIZE]; // String a la izquierda del pipe
+    char rightStr[COMMAND_BUFFER_SIZE]; // String a la derecha del pipe
+
+    if (!strDivide(commandBuffer, leftStr, rightStr, '|')) { // strDivide devuelve 0 si no encontro el divider
+        // El comando no es el pipe, queda validar que es printmem para una sola pantalla
+
         int64_t address = parsePrintmem(commandBuffer);
 
-        if (address >= 0) {
+        if (address >= 0) { // El comando es printmem con una direccion valida como argumento
             running[FULL_SCREEN] = PRINTMEM;
             printmemAddresses[FULL_SCREEN] = address;
             memDump(printmemAddresses[FULL_SCREEN]);
@@ -116,12 +128,18 @@ static void command_listener() {
             return;
         }
 
+        // El comando no es printmem o el argumento recibido es invalido
         displayError(address, commandBuffer);
         return;
     }
 
+    // strDivide retorno 1, entonces el comando es el pipe
+    // Queda validar que los comandos a los lados del pipe son validos
+
     command leftCommand, rightCommand;
     bool leftFound = FALSE, rightFound = FALSE;
+
+    // Vemos si matchean con algunos de los comandos que no son printmem
     for (i = 0; i < commandsDim - 2; i++) {
         
         if (strcmp(leftStr, commands[i].name) == 0) {
@@ -137,6 +155,9 @@ static void command_listener() {
     }
 
     int64_t leftAddress, rightAddress;
+
+    // Si alguno de los dos comandos no matcheo con los anteriores
+    // Vemos si son printmem
 
     if (!leftFound) {
         leftAddress = parsePrintmem(leftStr);
@@ -158,22 +179,25 @@ static void command_listener() {
         }
     }
 
+    // Ambos comandos matchearon con alguno
     if (leftFound && rightFound) {
-        //void(*fun)(command, command) = (void(*)(command, command)) commands[8].exec;
-        //fun(leftCommand, rightCommand);
         screenDiv(leftCommand, rightCommand);
         return;
     }
+
+    // Algun comando del pipe es invalido
+    // Con el valor de leftAddress y rightAddress
+    // podemos saber el tipo de error
+
     resetRunning();
     resetPrintmemAddresses();
     if (!leftFound) {
-        printf("Error in left command: ");
+        fprintf(STDERR, "Error in left command: ");
         displayError(leftAddress, leftStr);
     }
 
-
     if (!rightFound) {
-        printf("Error in right command: ");
+        fprintf(STDERR, "Error in right command: ");
         displayError(rightAddress, rightStr);
     }
 }
@@ -201,17 +225,22 @@ static void fibonacci() {
 }
 
 static void screenDiv(command leftCommand, command rightCommand) {
-    if(comingFromException == FALSE) {
+    if(comingFromException == FALSE) { // Si venimos de una excep no queremos limpiar la pantalla
         sysDivWind();
         leftExcep = FALSE;
         rightExcep = FALSE;
     }
     handlePipe(leftCommand, rightCommand);
+
+    // Si el usurario corto el programa salimos directamente
     if(stopped) {
         stopped = FALSE;
         sysOneWind();
         return;
     }
+
+    // Si ambos comandos terminaron por su cuenta esperamos
+    // un input del usuario antes de retornar
     sysSetWind(LEFT_SCREEN);
     printf("\n=== BOTH COMMANDS HAVE FINISHED ===\n");
     printf("Press enter or %c to return to console\n", CMD_STOP_KEY);
@@ -232,6 +261,11 @@ static void iterate(hasNextfp hasNext, nextfp next, resetfp reset) {
     stopped = FALSE;
 }
 
+// Si commandBuffer es "printmem" sin argumentos -> retorna ARGUMENT_MISSING
+// Si commandBuffer no contiene "printmem" -> retorna NOT_PRINTMEM
+// Si commandBuffer es "printmem" pero el argumento que recibe es invalido -> retorna INVALID_ARGUMENT
+// Si commandBuffer contiene "printmem" y el argumento es valido -> retorna el argumento como valor numerico
+// El argumento de printmem debe estar separado por un espacio como minimo, el resto de los espacios son ignorados
 static int64_t parsePrintmem(char * commandBuffer) {
     if (strcmp(commandBuffer, "printmem") == 0)
         return ARGUMENT_MISSING;
@@ -239,8 +273,10 @@ static int64_t parsePrintmem(char * commandBuffer) {
     if (strncmp(commandBuffer, "printmem ", 9) != 0)
         return NOT_PRINTMEM;
 
+    // Validacion del argumento
+
     int i = 9;
-    while (commandBuffer[i] == ' ') i++;
+    while (commandBuffer[i] == ' ') i++; // Ignoro espacios
 
     char argument[COMMAND_BUFFER_SIZE];
 
@@ -258,11 +294,14 @@ static int64_t parsePrintmem(char * commandBuffer) {
     return address;
 }
 
+
 static void handlePipe(command leftCommand, command rightCommand) {
     comingFromException = TRUE;
+    // Iteramos por ambos programas, los programas no iterables (no son ni fibo ni primes) se ejecutan una vez y listo
     while (!stopped && (leftCommand.it.hasNext(LEFT_SCREEN) || rightCommand.it.hasNext(RIGHT_SCREEN))) {
-        updateStatus();
+        updateStatus(); // Vemos si el usuario quiere pausar o parar los programas
 
+        // programa de la ventana izquierda
         if (!leftExcep && !paused[LEFT_SCREEN] && leftCommand.it.hasNext(LEFT_SCREEN)) {
             sysSetWind(LEFT_SCREEN);
             leftExcep = TRUE;
@@ -271,6 +310,7 @@ static void handlePipe(command leftCommand, command rightCommand) {
             leftExcep = FALSE;
         }
 
+        // programa de la ventana derecha
         if (!rightExcep && !paused[RIGHT_SCREEN] && rightCommand.it.hasNext(RIGHT_SCREEN)) {
             sysSetWind(RIGHT_SCREEN);
             rightExcep = TRUE;
@@ -279,6 +319,7 @@ static void handlePipe(command leftCommand, command rightCommand) {
             rightExcep = FALSE;
         }
     }
+    // termino la iteracion, reseteamos las flags
     leftCommand.it.reset(LEFT_SCREEN);
     rightCommand.it.reset(RIGHT_SCREEN);
     resetPaused();
@@ -288,14 +329,15 @@ static void handlePipe(command leftCommand, command rightCommand) {
     comingFromException = FALSE;
 }
 
+// Displays Error in STDERR
 static void displayError(int64_t add, const char *command) {
     switch(add) {
         case ARGUMENT_MISSING:
-            puts(ARGUMENT_MISSING_MESSAGE); break;
+            fputs(STDERR, ARGUMENT_MISSING_MESSAGE); break;
         case INVALID_ADDRESS:
-            printf(INVALID_ARGUMENT_MESSAGE, command+9); break;
+            fprintf(STDERR, INVALID_ARGUMENT_MESSAGE, command+9); break;
         case NOT_PRINTMEM:
-            printf(INVALID_COMMAND_MESSAGE_FORMAT, command); break;
+            fprintf(STDERR, INVALID_COMMAND_MESSAGE_FORMAT, command); break;
         default:
             return;
     }

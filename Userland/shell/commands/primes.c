@@ -34,7 +34,7 @@ void primesNext(int64_t screen) {
 }
 
 bool primesHasNext(int64_t screen) {
-    return primeInternalStates[screen].number <=UINT64_MAX;
+    return primeInternalStates[screen].number <=UINT64_MAX; // prevents overflow
 }
 
 void primesReset(int64_t screen) {

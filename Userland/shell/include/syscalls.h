@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+// ------------ Data structures for kernel interaction -----------
+// RTC time
 typedef struct time {
     uint8_t year;
     uint8_t month;
@@ -12,6 +14,7 @@ typedef struct time {
     uint8_t sec;
 } TTime;
 
+// Inforegs registers
 typedef struct regs {
     int64_t rax;
     int64_t rbx;
@@ -32,13 +35,28 @@ typedef struct regs {
     int64_t rip;
 } TRegs;
 
+// Writes the amount of bytes from the fd into buff
 extern int64_t sysread(uint64_t fd, char * buff, int64_t bytes);
+
+// Writes the amount of bytes from the buff into the fd
 extern int64_t syswrite(uint64_t fd, const char * buff, int64_t bytes);
+
+// Gets time in TTime format from the rtc
 extern void systime(TTime * ts);
+
+// Writes the MEM_DUMP_COUNT bytes from address into memData
 extern void sysmemdump(uint64_t address, int8_t *memData);
+
+// Gets the registeres in TRegs format from the kernel register snapshot
 extern int8_t sysregdump(TRegs *regs);
+
+// Clears the screen and sets two windows
 extern int64_t sysDivWind();
+
+// Tells the kernel to which window it should write
 extern int64_t sysSetWind(uint8_t window);
+
+// Clears the screen and sets one fullscreen window
 extern int64_t sysOneWind();
 
 #endif//SYSCALLS_H_

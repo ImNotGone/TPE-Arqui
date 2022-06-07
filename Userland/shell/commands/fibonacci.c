@@ -26,7 +26,7 @@ void fiboNext(int64_t screen) {
 }
 
 bool fiboHasNext(int64_t screen) {
-    return fiboInternalStates[screen].current <= UINT64_MAX - fiboInternalStates[screen].prev;
+    return fiboInternalStates[screen].current <= UINT64_MAX - fiboInternalStates[screen].prev; // prevents overflow
 }
 
 void fiboReset(int64_t screen) {
