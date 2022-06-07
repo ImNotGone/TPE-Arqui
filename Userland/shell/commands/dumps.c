@@ -8,7 +8,7 @@ void memDump(uint64_t address) {
         return;
     }
 
-    printf("Printing %d bytes from address %x :\n", accessed, address);
+    printf("Printing %d bytes starting at address %x:\n", accessed, address);
     for (int i = 0; i < accessed; i++)
         printf("%x: %x\n", address + i, 0xFF & memData[i]);
     if(accessed < MEM_DUMP_COUNT) {

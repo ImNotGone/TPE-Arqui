@@ -20,7 +20,7 @@ typedef enum ERRORS {ARGUMENT_MISSING = -1, NOT_PRINTMEM = -2, INVALID_ADDRESS =
 
 #define WELCOME_MESSAGE                 "Welcome to the console"
 #define ARGUMENT_MISSING_MESSAGE        "printmem: argument missing, please give an initial address as shows \'printmem C0DE\'"
-#define INVALID_ARGUMENT_MESSAGE        "printmem: invalid argument \'%s\', does not match any of the allowed numbers \"0123456789ABCDEF\"\n"
+#define INVALID_ARGUMENT_MESSAGE        "printmem: invalid argument \'%s\', should only contain this characters \"0123456789ABCDEF\"\n"
 #define INVALID_COMMAND_MESSAGE_FORMAT  "%s: command not found\n"
 
 // for use on pipe command
