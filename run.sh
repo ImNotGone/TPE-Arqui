@@ -2,7 +2,7 @@
 # --rtc base=localtime para q este correctamente seteado el RTC
 
 # abro docker y ejecuto los make necesarios
-docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -ti --name dockerArqui agodio/itba-so:1.0
+docker run  -e "GCC_COLORS=\"error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01\"" -d -v ${PWD}:/root --security-opt seccomp:unconfined -ti --name dockerArqui agodio/itba-so:1.0
 docker exec -it dockerArqui make clean    -C /root/Toolchain
 docker exec -it dockerArqui make all      -C /root/Toolchain
 docker exec -it dockerArqui make clean    -C /root/
