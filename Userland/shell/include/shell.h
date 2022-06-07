@@ -16,14 +16,62 @@
 #define FULL_SCREEN 0
 #define RIGHT_SCREEN 1
 
-#define ARGUMENT_MISSING -1
-#define NOT_PRINTMEM -2
-#define INVALID_ADDRESS -3
+typedef enum ERRORS {ARGUMENT_MISSING = -1, NOT_PRINTMEM = -2, INVALID_ADDRESS = -3} ERRORS;
 
-#define WELCOME_MESSAGE "Welcome to the console"
-#define ARGUMENT_MISSING_MESSAGE "printmem should receive the address as an argument"
-#define INVALID_ARGUMENT_MESSAGE "Invalid argument"
-#define INVALID_COMMAND_MESSAGE_FORMAT "%s -> invalid command\n"
+#define WELCOME_MESSAGE                 "Welcome to the console"
+#define ARGUMENT_MISSING_MESSAGE        "printmem: argument missing, please give an initial address as shows \'printmem C0DE\'"
+#define INVALID_ARGUMENT_MESSAGE        "printmem: invalid argument \'%s\', does not match any of the allowed numbers \"0123456789ABCDEF\"\n"
+#define INVALID_COMMAND_MESSAGE_FORMAT  "%s: command not found\n"
+
+// for use on pipe command
+// selector for next, in case of printmem command
+#define ADDR_OR_SCREEN(screen) (printmemAddresses[(screen)] >= 0 ? printmemAddresses[(screen)] : (screen))
+
+// To expand defined value to a string
+#define VALUE_TO_STRING(s) LITERAL_TO_STRING(s)
+#define LITERAL_TO_STRING(s) #s
+
+// Pipe / iterable command auxiliary keys
+#define CMD_STOP_KEY        's'
+#define LEFTCMD_PAUSE_KEY   'a'
+#define RIGHTCMD_PAUSE_KEY  'd'
+
+#define CONSOLE_PROMPT  "@byte: > "
+
+#define HELP_DESC       "Shows all available commands."
+#define INFOREG_DESC    "Prints a register snapshot, snapshots are taken with \'ctrl + s\'"
+#define ZERODIV_DESC    "Generates a zero divison exception"
+#define INVALID_OP_DESC "Generates an invalid operation code exception"
+#define TIME_DESC       "Prints current system time"
+#define PRIMES_DESC     "Prints prime numbers"
+#define FIBONACCI_DESC  "Prints numbers in the fibonacci sequence"
+#define PRINTMEM_DESC   "Prints the 32 bytes following the received address. Use example: printmem C0FFEE"
+#define PIPE_DESC       "Divides the screen and runs 2 programs. "\
+                        VALUE_TO_STRING(LEFTCMD_PAUSE_KEY)" pauses left side, "\
+                        VALUE_TO_STRING(RIGHTCMD_PAUSE_KEY)" pauses right side, "\
+                        VALUE_TO_STRING(CMD_STOP_KEY)" stops execution."
+
+// type definitions
+typedef bool (* hasNextfp)  (int64_t);
+typedef void (* nextfp)     (int64_t);
+typedef void (* resetfp)    (int64_t);
+
+typedef struct iterator {
+    hasNextfp hasNext;
+    nextfp    next;
+    resetfp   reset;
+} iterator;
+
+typedef void (*voidfp)(void);
+
+typedef struct command {
+    char * name;
+    char * desc;
+    voidfp exec;
+    iterator it;
+} command;
+
+typedef enum COMMANDS {NONE = -1, HELP, INFOREG, ZERODIV, INVALID_OPCODE, TIME, PRIMES, FIBONACCI, PRINTMEM, PIPE, CANT_COMMANDS} COMMANDS;
 
 extern void zerodiv();
 extern void invalidopcode();

@@ -1,27 +1,5 @@
 #include <shell.h>
 
-// type definitions
-typedef bool (* hasNextfp)  (int64_t);
-typedef void (* nextfp)     (int64_t);
-typedef void (* resetfp)    (int64_t);
-
-typedef struct iterator {
-    hasNextfp hasNext;
-    nextfp    next;
-    resetfp   reset;
-} iterator;
-
-typedef void (*voidfp)(void);
-
-typedef struct command {
-    char * name;
-    char * desc;
-    voidfp exec;
-    iterator it;
-} command;
-
-typedef enum COMMANDS {NONE = -1, HELP, INFOREG, ZERODIV, INVALID_OPCODE, TIME, PRIMES, FIBONACCI, PRINTMEM, PIPE, CANT_COMMANDS} COMMANDS;
-
 // -------- main functions -------------------------------------
 static void init();
 static void command_listener();
@@ -55,19 +33,6 @@ static bool comingFromException = TRUE;
 static bool started[] = {TRUE, TRUE};
 static int64_t printmemAddresses[] = {INVALID_ADDRESS, INVALID_ADDRESS};
 
-// for use on pipe command
-// selector for next, in case of printmem command
-#define ADDR_OR_SCREEN(screen) (printmemAddresses[(screen)] >= 0 ? printmemAddresses[(screen)] : (screen))
-
-// To expand defined value to a string
-#define VALUE_TO_STRING(s) LITERAL_TO_STRING(s)
-#define LITERAL_TO_STRING(s) #s
-
-// Pipe / iterable command auxiliary keys
-#define CMD_STOP_KEY 's'
-#define LEFTCMD_PAUSE_KEY 'a'
-#define RIGHTCMD_PAUSE_KEY 'd'
-
 // nonIterableCommands functions
 // only does 1 repetition
 static bool nonIterableCommandHasNext(int64_t screen) {
@@ -79,15 +44,15 @@ static void nonIterableCommandReset(int64_t screen) {
 }
 
 static command commands[] = {
-        {"help", "shows all available commands",                                     help,              {nonIterableCommandHasNext, help,               nonIterableCommandReset}},
-        {"inforeg", "prints register snapshot, take a snapshot using \'ctrl + s\'",  regDump,           {nonIterableCommandHasNext, regDump,            nonIterableCommandReset}},
-        {"zerodiv", "generates a zero division exception",                           zerodiv,           {nonIterableCommandHasNext, zerodiv,            nonIterableCommandReset}},
-        {"invalid_opcode", "generates an invalid operation exception",               invalidopcode,     {nonIterableCommandHasNext, invalidopcode,      nonIterableCommandReset}},
-        {"time", "prints the current system time",                                   printTime,         {nonIterableCommandHasNext, printTime,          nonIterableCommandReset}},
-        {"primes", "prints primes",                                                  primes,            {primesHasNext,             primesNext,         primesReset}},
-        {"fibonacci", "prints the fibonacci series",                                   fibonacci,          {fiboHasNext,               fiboNext,           fiboReset}},
-        {"printmem", "prints the 32 bytes which follow the received address",        (voidfp) memDump,  {nonIterableCommandHasNext, memDump,            nonIterableCommandReset}},
-        {"|", "allows to divide the screen and run 2 programs",                      (voidfp) screenDiv,{nonIterableCommandHasNext, (nextfp) screenDiv, nonIterableCommandReset}}
+    {"help",            HELP_DESC,          help,              {nonIterableCommandHasNext, help,               nonIterableCommandReset}},
+    {"inforeg",         INFOREG_DESC,       regDump,           {nonIterableCommandHasNext, regDump,            nonIterableCommandReset}},
+    {"zerodiv",         ZERODIV_DESC,       zerodiv,           {nonIterableCommandHasNext, zerodiv,            nonIterableCommandReset}},
+    {"invalid_opcode",  INVALID_OP_DESC,    invalidopcode,     {nonIterableCommandHasNext, invalidopcode,      nonIterableCommandReset}},
+    {"time",            TIME_DESC,          printTime,         {nonIterableCommandHasNext, printTime,          nonIterableCommandReset}},
+    {"primes",          PRIMES_DESC,        primes,            {primesHasNext,             primesNext,         primesReset}},
+    {"fibonacci",       FIBONACCI_DESC,     fibonacci,         {fiboHasNext,               fiboNext,           fiboReset}},
+    {"printmem",        PRINTMEM_DESC,      (voidfp) memDump,  {nonIterableCommandHasNext, memDump,            nonIterableCommandReset}},
+    {"|",               PIPE_DESC,          (voidfp) screenDiv,{nonIterableCommandHasNext, (nextfp) screenDiv, nonIterableCommandReset}}
 };
 
 static int commandsDim = sizeof(commands)/sizeof(commands[0]);
@@ -102,7 +67,7 @@ int main() {
     }
 
     while(TRUE) {
-        putchar('>');
+        printf(CONSOLE_PROMPT);
         command_listener();
     }
 }
@@ -216,7 +181,12 @@ static void command_listener() {
 
 //------------------- commands implemented in this file ---------------
 static void help() {
-    puts("The available commands are:");
+    puts("\n=== GENERAL INFO ===\n");
+    puts("\'s\' stops iterable or pipe programs");
+    puts("\'a\' pauses left side or individual programs");
+    puts("\'d\' pauses right side programs");
+    puts("\n====================\n");
+    puts("The available commands are:\n");
     for(int i = 0; i < commandsDim; i++) {
         printf("%d) %s => %s\n", i + 1, commands[i].name, commands[i].desc);
     }
@@ -323,7 +293,7 @@ static void displayError(int64_t add, const char *command) {
         case ARGUMENT_MISSING:
             puts(ARGUMENT_MISSING_MESSAGE); break;
         case INVALID_ADDRESS:
-            puts(INVALID_ARGUMENT_MESSAGE); break;
+            printf(INVALID_ARGUMENT_MESSAGE, command+9); break;
         case NOT_PRINTMEM:
             printf(INVALID_COMMAND_MESSAGE_FORMAT, command); break;
         default:
