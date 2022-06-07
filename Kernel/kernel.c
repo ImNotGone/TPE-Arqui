@@ -83,13 +83,6 @@ int main() {
 #define LOGO_HEIGHT	5
 static void printLogo() {
 	// https://patorjk.com/software/taag/#p=testall&f=Cosmike&t=BYTE
-	/*
-	"  _____  ____________
-	  / _ ) \/ /_  __/ __/
-	 / _  |\ \/ / / / _/
-	/____/ /_/ /_/ /___/
-	"
-	*/
 	gcolor C1 = {96, 60, 20};
 	gcolor C2 = {156, 39, 6};
 	gcolor C3 = {212, 91, 18};
