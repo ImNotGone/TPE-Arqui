@@ -309,14 +309,14 @@ static int64_t parsePrintmem(char * commandBuffer) {
 static void handlePipe(iterator leftIt, iterator rightIt) {
     comingFromException = TRUE;
     // Iteramos por ambos programas, los programas no iterables (no son ni fibo ni primes) se ejecutan una vez y listo
-    while (!stopped && (left.hasNext(LEFT_SCREEN) || right.hasNext(RIGHT_SCREEN))) {
+    while (!stopped && (leftIt.hasNext(LEFT_SCREEN) || rightIt.hasNext(RIGHT_SCREEN))) {
         updateStatus(); // Vemos si el usuario quiere pausar o parar los programas
         PIPE_IT(LEFT_SCREEN, leftIt);
         PIPE_IT(RIGHT_SCREEN, rightIt);
     }
     // termino la iteracion, reseteamos las flags
-    left.reset(LEFT_SCREEN);
-    right.reset(RIGHT_SCREEN);
+    leftIt.reset(LEFT_SCREEN);
+    rightIt.reset(RIGHT_SCREEN);
     resetPaused();
     resetRunning();
     resetStarted();
