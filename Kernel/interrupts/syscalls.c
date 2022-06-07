@@ -22,7 +22,7 @@ typedef int64_t (*TSyscallHandler) (uint64_t rdi, uint64_t rsi, uint64_t rdx, ui
 
 int64_t sysread(uint64_t fd, char * buffer, int64_t bytes);
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
-void systime(TTime * ts);
+void    systime(TTime * ts);
 int64_t sysmemdump(uint64_t address, int8_t *memData);
 int64_t sysregdump(TRegs *regs);
 int64_t sysDivWindow();

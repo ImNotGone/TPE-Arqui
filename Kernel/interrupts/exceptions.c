@@ -57,6 +57,9 @@ void exceptionDispatcher(int exception, uint64_t exceptionRegisters[18]) {
 		"rip   : ",
 		"rflags: ",
 	};
+	gcolor RED = {0xFF, 0x00, 0x00};
+	gcolor WHITE = {0xFF, 0xFF, 0xFF};
+	gSetDefaultForeground(RED);
 	gClear();
 	gPrint("Exception ");
 	gPrintDec(exception);
@@ -69,20 +72,12 @@ void exceptionDispatcher(int exception, uint64_t exceptionRegisters[18]) {
 		gPrintHex(exceptionRegisters[i]);
 		gNewline();
 	}
+	gSetDefaultForeground(WHITE);
 	excepHandler(exceptions[exception].handle);
 }
 
 static void excepHandler(fp handler){
 	handler();
-	/*
-	gPrint("Presione enter para continuar");
-	int c;
-	do{
-		// freno la ejecucion del programa hasta un enter
-		_hlt();
-	} while((c=getchar()) != '\n');
-	*/
-	//gClear();
 	restartKernel();
 }
 

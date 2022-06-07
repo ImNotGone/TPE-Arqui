@@ -36,47 +36,13 @@ void * getStackBase() {
 }
 
 void * initializeKernelBinary() {
-	// char buffer[10];
-
-	// gPrint("[x64BareBones]");
-	// gNewline();
-
-	// gPrint("CPU Vendor:");
-	// gPrint(cpuVendor(buffer));
-	// gNewline();
-
-	// gPrint("[Loading modules]");
-	// gNewline();
-	void *moduleAddresses[] = {
-		shellAddress,
-	};
+	
+	void *moduleAddresses[] = {shellAddress};
 
 	loadModules(&endOfKernelBinary, moduleAddresses);
-	// gPrint("[Done]");
-	// gNewline();
-	// gNewline();
-
-	// gPrint("[Initializing kernel's binary]");
-	// gNewline();
 
 	clearBSS(&bss, &endOfKernel - &bss);
 
-	// gPrint("  text: 0x");
-	// gPrintHex((uint64_t)&text);
-	// gNewline();
-	// gPrint("  rodata: 0x");
-	// gPrintHex((uint64_t)&rodata);
-	// gNewline();
-	// gPrint("  data: 0x");
-	// gPrintHex((uint64_t)&data);
-	// gNewline();
-	// gPrint("  bss: 0x");
-	// gPrintHex((uint64_t)&bss);
-	// gNewline();
-
-	// gPrint("[Done]");
-	// gNewline();
-	// gNewline();
 	load_idt();
 	initGraphics();
 	return getStackBase();

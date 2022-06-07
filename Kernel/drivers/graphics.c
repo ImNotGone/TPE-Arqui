@@ -1,6 +1,7 @@
 #include <drivers/graphics.h>
 #include <drivers/font.h>
 
+// si queremos que no se inicien en bss tendriamos que no iniciarlos en 0
 static gwindow windows[2]; // -> pantallas
 static uint8_t currentWindow = 0;
 static uint8_t cantWindows = 0;
@@ -139,19 +140,13 @@ int8_t divideWindows() {
         .background = DEFAULT_BACKGROUND,
         .foreground = DEFAULT_FOREGROUND,
     };
-    // limpio todo
     windows[currentWindow] = aux;
     currentWindow = 1;
     windows[currentWindow] = aux;
     windows[currentWindow].width -= 1;
-    /*
-    windows[currentWindow].background.R += 0x30;
-    windows[currentWindow].background.G += 0x30;
-    windows[currentWindow].background.B += 0x30;
-    */
     windows[currentWindow].sx = graphicsInfo->width/(fontWidth*2) + 1;
-    // gClear() o gUpdateBackground();
     currentWindow = 0;
+
     // linea de division
     int x = (graphicsInfo->width + fontWidth)/2;
     for(int y = 0; y < graphicsInfo->height; y++) {
@@ -163,9 +158,7 @@ int8_t divideWindows() {
 
 int8_t setWindow(uint8_t window) {
     if(window > cantWindows) return -1;
-    // gClear() o gUpdateBackground();
     currentWindow = window;
-    // gClear() o gUpdateBackground();
     return 1;
 }
 

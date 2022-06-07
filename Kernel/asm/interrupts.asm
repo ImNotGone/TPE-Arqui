@@ -245,7 +245,7 @@ haltcpu:
 	ret
 
 restartKernel:
-	sti
+	sti	; reset hardware interrupts
 	call getStackBase
 	mov rsp, rax	; reinicio el stack
 	call main

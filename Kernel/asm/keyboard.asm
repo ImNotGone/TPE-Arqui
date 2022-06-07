@@ -6,14 +6,8 @@ sys_getKey:
     mov rbp, rsp
     mov rax,0
 
-; no hace falta fijarse pq me mando una interrupcion   
-;.loop:
-    ;me fijo si hay algo para leer
-    ;in al,0x64
-    ;and al,0x01
-    ;cmp al,0
-    ;je .loop
-    
+    ; no hace falta fijarse si hay algo para leer
+    ; porque me mando a leer la interrupcion de teclado
     ; leo la tecla
     in al, 0x60
 

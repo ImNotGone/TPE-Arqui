@@ -22,14 +22,14 @@ typedef enum ERRORS {ARGUMENT_MISSING = -1, NOT_PRINTMEM = -2, INVALID_ADDRESS =
 #define ARGUMENT_MISSING_MESSAGE        "printmem: argument missing, please give an initial address as shows \'printmem C0DE\'"
 #define INVALID_ARGUMENT_MESSAGE        "printmem: invalid argument \'%s\', should only contain this characters \"0123456789ABCDEF\"\n"
 #define INVALID_COMMAND_MESSAGE_FORMAT  "%s: command not found\n"
-
 // for use on pipe command
 // selector for next, in case of printmem command
 #define ADDR_OR_SCREEN(screen) (printmemAddresses[(screen)] >= 0 ? printmemAddresses[(screen)] : (screen))
 
 // To expand defined value to a string
-#define VALUE_TO_STRING(s) LITERAL_TO_STRING(s)
-#define LITERAL_TO_STRING(s) #s
+#define VALUE_TO_STRING(s)      LITERAL_TO_STRING(s)
+#define LITERAL_TO_STRING(s)    #s
+#define CMD_BUFF_FORMAT         "%"VALUE_TO_STRING(COMMAND_BUFFER_SIZE)"s"
 
 // Pipe / iterable command auxiliary keys
 #define CMD_STOP_KEY        's'
