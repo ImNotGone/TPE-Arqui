@@ -45,7 +45,7 @@ extern int64_t syswrite(uint64_t fd, const char * buff, int64_t bytes);
 extern void systime(TTime * ts);
 
 // Writes the MEM_DUMP_COUNT bytes from address into memData
-extern void sysmemdump(uint64_t address, int8_t *memData);
+extern int64_t sysmemdump(uint64_t address, int8_t *memData);
 
 // Gets the registeres in TRegs format from the kernel register snapshot
 extern int8_t sysregdump(TRegs *regs);

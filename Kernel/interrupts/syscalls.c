@@ -3,12 +3,6 @@
 #include <drivers/keyboard.h>
 #include <drivers/RTC.h>
 
-#define STDIN   0
-#define STDOUT  1
-#define STDERR  2
-
-#define MEM_DUMP_SIZE 32
-
 int8_t regSaved;
 int64_t registerSnapshot[17];
 
@@ -29,7 +23,7 @@ typedef int64_t (*TSyscallHandler) (uint64_t rdi, uint64_t rsi, uint64_t rdx, ui
 int64_t sysread(uint64_t fd, char * buffer, int64_t bytes);
 int64_t syswrite(uint64_t fd, const char * buffer, int64_t bytes);
 void systime(TTime * ts);
-void sysmemdump(uint64_t direction, int8_t *memData);
+int64_t sysmemdump(uint64_t address, int8_t *memData);
 int64_t sysregdump(TRegs *regs);
 int64_t sysDivWindow();
 int64_t sysSetWindow(uint8_t window);
@@ -96,10 +90,18 @@ void systime(TTime * t) {
 }
 
 // Escribe los MEM_DUMP_SIZE bytes desde la direccion de memoria indicada en memData
-void sysmemdump(uint64_t address, int8_t *memData) {
+int64_t sysmemdump(uint64_t address, int8_t *memData) {
+    // No pudimos resolver el acceso a una direccion de memoria mayor a MAX_MEM_ADDRESS
+    if (address > MAX_MEM_ADDRESS)
+        return -1;
     int8_t *memDir = (int8_t *) address;
-    for (int i = 0; i < MEM_DUMP_SIZE; i++)
+    int i;
+    for (i = 0; i < MEM_DUMP_SIZE; i++) {
+        if (address + i > MAX_MEM_ADDRESS)
+            return i;
         memData[i] = *(memDir + i);
+    }
+    return i;
 }
 
 // Si se guardaron registros los escribe en regs y retorna 1

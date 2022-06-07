@@ -1,10 +1,15 @@
 #include <dumps.h>
 
-void memDump(int64_t address) {
+void memDump(uint64_t address) {
     int8_t memData[MEM_DUMP_COUNT];
-    sysmemdump(address, memData);
-    printf("Printing %d bytes from address %x :\n", MEM_DUMP_COUNT, address);
-    for (int i = 0; i < MEM_DUMP_COUNT; i++)
+    int64_t accessed = sysmemdump(address, memData);
+    if (accessed < 0) {
+        fputs(STDERR, "Cant access any memory from the address received");
+        return;
+    }
+
+    printf("Printing %d bytes from address %x :\n", accessed, address);
+    for (int i = 0; i < accessed; i++)
         printf("%x: %x\n", address + i, 0xFF & memData[i]);
 }
 

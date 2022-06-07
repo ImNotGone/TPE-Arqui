@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#define MAX_MEM_ADDRESS 0xFFFFfffff
+#define MEM_DUMP_SIZE 32
+#define STDIN   0
+#define STDOUT  1
+#define STDERR  2
+
 typedef struct regs {
     int64_t rax;
     int64_t rbx;
