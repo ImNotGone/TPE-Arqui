@@ -26,4 +26,4 @@ $(MODULE_ELF):$(OBJECTS) $(OBJECTS_ASM)
 clean:
 	rm -rf */*.o *.o
 
-.PHONY: all clean
+.PHONY: all clean gdb

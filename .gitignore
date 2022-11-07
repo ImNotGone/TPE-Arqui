@@ -21,3 +21,6 @@
 
 #Clion settings
 .idea
+
+#clangd lsp
+compile_flags.txt

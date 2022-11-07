@@ -1,6 +1,6 @@
 #include <drivers/graphics.h>
 #include <drivers/font.h>
-
+#include <lib.h>
 // si queremos que no se inicien en bss tendriamos que no iniciarlos en 0
 static gwindow windows[2]; // -> pantallas
 static uint8_t currentWindow = 0;
@@ -48,19 +48,13 @@ static void scrollUp(){
         filaActual = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + i);
         filaSig  = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + fontHeight + i);
 
-        // itero por las columnas y copio la informacion 
-        for(int j=0; j < windows[currentWindow].width * fontWidth * COLORCHANELLS ; j++){
-            filaActual[j] = filaSig[j];
-        }
+        memcpy(filaActual, filaSig, COLORCHANELLS * windows[currentWindow].width * fontWidth);
+
     }
-    // limpio la ultima linea
-    for(;i < (windows[currentWindow].height) * fontHeight; i++) {
+
+    for(; i < (windows[currentWindow].height * fontHeight); i++) {
         filaActual = getPixel(windows[currentWindow].sx * fontWidth, windows[currentWindow].sy + i);
-        for(int j=0; j < windows[currentWindow].width * fontWidth * COLORCHANELLS; j+=COLORCHANELLS){
-            filaActual[j]   = DEFAULT_BACKGROUND.B;
-            filaActual[j+1] = DEFAULT_BACKGROUND.G;
-            filaActual[j+2] = DEFAULT_BACKGROUND.R;
-        }
+        memset(filaActual, 0, COLORCHANELLS * windows[currentWindow].width * fontWidth);
     }
     windows[currentWindow].cy -= 1;
 }
@@ -71,7 +65,7 @@ static void gSetCursor(gcolor color) {
     if(windows[currentWindow].cx == 0){
         // subo una fila
         windows[currentWindow].cy -= 1;
-        // me paro en la ultima posicion de la fila                    
+        // me paro en la ultima posicion de la fila
         windows[currentWindow].cx = windows[currentWindow].width-1;
         return;
     }
@@ -150,7 +144,7 @@ int8_t divideWindows() {
     // linea de division
     int x = (graphicsInfo->width + fontWidth)/2;
     for(int y = 0; y < graphicsInfo->height; y++) {
-        drawPixel(x, y, DEFAULT_FOREGROUND);            
+        drawPixel(x, y, DEFAULT_FOREGROUND);
     }
     cursorActive = 1;
     return 1;
@@ -170,7 +164,7 @@ void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
 
     if(windows[currentWindow].cy == windows[currentWindow].height)
         scrollUp();
-    
+
     const uint8_t * bitmap = getcharFont(c);
     // current bit y
     uint16_t cby = (windows[currentWindow].sy + windows[currentWindow].cy)*fontHeight;
@@ -180,12 +174,12 @@ void gPutcharColor(uint8_t c, gcolor background, gcolor foreground) {
     uint8_t mask;
     for(int i = 0; i < fontHeight; i++, cby++) {
         mask = 0x80;
-        cbx = aux;    
+        cbx = aux;
         for(int j = 0; j < fontWidth; j++, mask >>= 1, cbx++) {
             drawPixel(cbx, cby, (bitmap[i] & mask)?foreground:background);
         }
     }
-    
+
     gUpdatePos();
     cursorActive = 1;
 }
@@ -308,14 +302,14 @@ static void doBackSpace() {
     if(windows[currentWindow].cx == 0){
         // subo una fila
         windows[currentWindow].cy -= 1;
-        // me paro en la ultima posicion de la fila                    
+        // me paro en la ultima posicion de la fila
         windows[currentWindow].cx = windows[currentWindow].width-1;
         // imprimo un "blank"
         gPutcharColor(' ', windows[currentWindow].background, windows[currentWindow].foreground);
         // me vuelvo a mover para atras
         // subo una fila
         windows[currentWindow].cy -= 1;
-        // me paro en la ultima posicion de la fila   
+        // me paro en la ultima posicion de la fila
         windows[currentWindow].cx = windows[currentWindow].width-1;
         return;
     }
